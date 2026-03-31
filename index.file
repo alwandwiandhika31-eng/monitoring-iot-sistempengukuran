@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoring IoT - Project 2</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; margin: 20px; text-align: center; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; margin-bottom: 30px; }
+        .grid-container { display: flex; justify-content: space-around; gap: 15px; margin-bottom: 30px; }
+        .card { background: #ffffff; border: 1px solid #e0e0e0; padding: 20px; border-radius: 12px; width: 30%; }
+        .card p { font-size: 28px; font-weight: bold; margin: 10px 0; color: #2980b9; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #eee; padding: 12px; text-align: center; }
+        th { background-color: #2980b9; color: white; }
+        .chart-container { position: relative; height: 350px; width: 100%; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Dashboard Monitoring IoT</h1>
+
+    <div class="grid-container">
+        <div class="card" style="border-top: 5px solid #e74c3c;">
+            <h3>Suhu</h3>
+            <p><span id="val-t">0</span> °C</p>
+        </div>
+        <div class="card" style="border-top: 5px solid #3498db;">
+            <h3>Kelembapan</h3>
+            <p><span id="val-h">0</span> %</p>
+        </div>
+        <div class="card" style="border-top: 5px solid #f1c40f;">
+            <h3>Kadar Gas</h3>
+            <p><span id="val-g">0</span> ppm</p>
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <canvas id="iotChart"></canvas>
+    </div>
+
+    <h3 style="margin-top: 40px; color: #34495e;">Riwayat Data Terkini</h3>
+    <table>
+        <thead>
+            <tr><th>Waktu</th><th>Suhu (°C)</th><th>Kelembapan (%)</th><th>Gas (ppm)</th></tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+    </table>
+</div>
+
+<script>
+    // 1. KONFIGURASI FIREBASE
+    const firebaseConfig = {
+        databaseURL: "https://monitoring-iot-9ed03-default-rtdb.asia-southeast1.firebasedatabase.app/"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // 2. SETUP GRAFIK
+    const ctx = document.getElementById('iotChart').getContext('2d');
+    const iotChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [], 
+            datasets: [
+                { label: 'Suhu (°C)', data: [], borderColor: '#e74c3c', fill: false },
+                { label: 'Lembap (%)', data: [], borderColor: '#3498db', fill: false },
+                { label: 'Gas (ppm)', data: [], borderColor: '#f1c40f', fill: false }
+            ]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    // 3. AMBIL DATA
+    db.ref("Sensor").on("value", (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            const time = new Date().toLocaleTimeString();
+
+            // Update Angka
+            document.getElementById("val-t").innerText = data.Suhu;
+            document.getElementById("val-h").innerText = data.Kelembapan;
+            document.getElementById("val-g").innerText = data.KadarGas;
+
+            // Update Grafik
+            if (iotChart.data.labels.length > 10) {
+                iotChart.data.labels.shift();
+                iotChart.data.datasets.forEach(dataset => dataset.data.shift());
+            }
+            iotChart.data.labels.push(time);
+            iotChart.data.datasets[0].data.push(data.Suhu);
+            iotChart.data.datasets[1].data.push(data.Kelembapan);
+            iotChart.data.datasets[2].data.push(data.KadarGas);
+            iotChart.update();
+
+            // Update Tabel
+            const tableBody = document.getElementById("table-body");
+            const newRow = `<tr><td>${time}</td><td>${data.Suhu}</td><td>${data.Kelembapan}</td><td>${data.KadarGas}</td></tr>`;
+            tableBody.insertAdjacentHTML('afterbegin', newRow);
+            if (tableBody.rows.length > 5) tableBody.deleteRow(5);
+        }
+    });
+</script>
+</body>
+</html>

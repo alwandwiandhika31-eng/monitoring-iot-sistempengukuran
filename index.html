@@ -3,110 +3,203 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring IoT - Project 2</title>
+    <title>IoT Analytics - Dark Edition</title>
     
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; margin: 20px; text-align: center; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h1 { color: #2c3e50; margin-bottom: 30px; }
-        .grid-container { display: flex; justify-content: space-around; gap: 15px; margin-bottom: 30px; }
-        .card { background: #ffffff; border: 1px solid #e0e0e0; padding: 20px; border-radius: 12px; width: 30%; }
-        .card p { font-size: 28px; font-weight: bold; margin: 10px 0; color: #2980b9; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #eee; padding: 12px; text-align: center; }
-        th { background-color: #2980b9; color: white; }
-        .chart-container { position: relative; height: 350px; width: 100%; }
+        :root { --bg-dark: #0b0f19; --card-bg: #161c2d; --accent: #3b82f6; }
+        body { background-color: var(--bg-dark); color: #e2e8f0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        .header-glass { background: rgba(22, 28, 45, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid #2d3748; sticky: top; }
+        .card-custom { background: var(--card-bg); border: 1px solid #2d3748; border-radius: 1.25rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); }
+        
+        .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; }
+        .val-big { font-size: 2.25rem; font-weight: 800; letter-spacing: -1px; }
+        .unit { font-size: 1rem; color: #94a3b8; margin-left: 4px; }
+        
+        .btn-action { border-radius: 10px; font-weight: 600; padding: 10px 20px; transition: 0.3s; }
+        .btn-start { background: #10b981; color: white; border: none; }
+        .btn-stop { background: #ef4444; color: white; border: none; }
+        
+        .table-custom { color: #cbd5e1; border-color: #2d3748; }
+        .badge-status { padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; text-transform: uppercase; font-weight: 700; }
+        
+        iframe { border-radius: 1.25rem; border: 1px solid #2d3748; height: 450px; width: 100%; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>Dashboard Monitoring IoT</h1>
+    <nav class="header-glass py-3 mb-4 sticky-top">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-bolt text-warning me-2 fs-4"></i>
+                <h5 class="mb-0 fw-bold">PROYEK MONITORING IOT</h5>
+            </div>
+            <span id="logStatus" class="badge-status bg-secondary"><i class="fas fa-pause-circle me-1"></i> Idle</span>
+        </div>
+    </nav>
 
-    <div class="grid-container">
-        <div class="card" style="border-top: 5px solid #e74c3c;">
-            <h3>Suhu</h3>
-            <p><span id="val-t">0</span> °C</p>
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card-custom p-3 d-flex flex-wrap align-items-center gap-3">
+                    <button id="btnStart" class="btn-action btn-start"><i class="fas fa-play me-2"></i>START LOGGING</button>
+                    <button id="btnStop" class="btn-action btn-stop"><i class="fas fa-stop me-2"></i>STOP</button>
+                    <button id="btnReset" class="btn btn-outline-light border-secondary btn-action">RESET TABLE</button>
+                    
+                    <div class="ms-md-auto d-flex align-items-center gap-2">
+                        <span class="small text-secondary">Update (Detik):</span>
+                        <input type="number" id="intervalInput" class="form-control bg-dark text-white border-secondary shadow-none" value="2" style="width: 80px;">
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="card" style="border-top: 5px solid #3498db;">
-            <h3>Kelembapan</h3>
-            <p><span id="val-h">0</span> %</p>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="card-custom p-4">
+                    <div class="stat-icon bg-danger bg-opacity-10 text-danger"><i class="fas fa-thermometer-half"></i></div>
+                    <p class="text-secondary mb-1">Temperatur</p>
+                    <div class="val-big text-white"><span id="txtSuhu">0.00</span><span class="unit">°C</span></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card-custom p-4">
+                    <div class="stat-icon bg-info bg-opacity-10 text-info"><i class="fas fa-droplet"></i></div>
+                    <p class="text-secondary mb-1">Kelembapan</p>
+                    <div class="val-big text-white"><span id="txtLembap">0.00</span><span class="unit">%</span></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card-custom p-4">
+                    <div class="stat-icon bg-warning bg-opacity-10 text-warning"><i class="fas fa-mask-ventilator"></i></div>
+                    <p class="text-secondary mb-1">Kadar Gas</p>
+                    <div class="val-big text-white"><span id="txtGas">0</span><span class="unit">ppm</span></div>
+                </div>
+            </div>
         </div>
-        <div class="card" style="border-top: 5px solid #f1c40f;">
-            <h3>Kadar Gas</h3>
-            <p><span id="val-g">0</span> ppm</p>
+
+        <div class="row g-4 mb-4">
+            <div class="col-lg-8">
+                <div class="card-custom p-4">
+                    <h6 class="fw-bold mb-4">Grafik Real-time (Multi-Scale)</h6>
+                    <div style="height: 350px;">
+                        <canvas id="iotChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card-custom p-4">
+                    <h6 class="fw-bold mb-3">History Lokal</h6>
+                    <div class="table-responsive" style="max-height: 330px;">
+                        <table class="table table-dark table-custom small">
+                            <thead>
+                                <tr><th>Jam</th><th>Temp</th><th>Hum</th><th>Gas</th></tr>
+                            </thead>
+                            <tbody id="tableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card-custom p-4">
+                    <h6 class="fw-bold mb-3"><i class="fas fa-database me-2 text-success"></i>Cloud Storage (Google Sheets)</h6>
+                    <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vT5K7_.../pubhtml?widget=true&headers=false"></iframe>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="chart-container">
-        <canvas id="iotChart"></canvas>
-    </div>
+    <script>
+        // --- KONFIGURASI FIREBASE ---
+        const firebaseConfig = {
+            databaseURL: "https://monitoring-iot-9ed03-default-rtdb.asia-southeast1.firebasedatabase.app/"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-    <h3 style="margin-top: 40px; color: #34495e;">Riwayat Data Terkini</h3>
-    <table>
-        <thead>
-            <tr><th>Waktu</th><th>Suhu (°C)</th><th>Kelembapan (%)</th><th>Gas (ppm)</th></tr>
-        </thead>
-        <tbody id="table-body"></tbody>
-    </table>
-</div>
+        let isRunning = false;
+        
+        // --- INISIALISASI CHART ---
+        const ctx = document.getElementById('iotChart').getContext('2d');
+        const iotChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    { label: 'Suhu (°C)', data: [], borderColor: '#ef4444', tension: 0.3, yAxisID: 'y1' },
+                    { label: 'Lembap (%)', data: [], borderColor: '#3b82f6', tension: 0.3, yAxisID: 'y1' },
+                    { label: 'Gas (ppm)', data: [], borderColor: '#f59e0b', tension: 0.3, yAxisID: 'y2' }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y1: { type: 'linear', position: 'left', grid: { color: '#2d3748' } },
+                    y2: { type: 'linear', position: 'right', grid: { drawOnChartArea: false } }
+                },
+                plugins: { legend: { labels: { color: '#94a3b8' } } }
+            }
+        });
 
-<script>
-    // 1. KONFIGURASI FIREBASE
-    const firebaseConfig = {
-        databaseURL: "https://monitoring-iot-9ed03-default-rtdb.asia-southeast1.firebasedatabase.app/"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    // 2. SETUP GRAFIK
-    const ctx = document.getElementById('iotChart').getContext('2d');
-    const iotChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: [], 
-            datasets: [
-                { label: 'Suhu (°C)', data: [], borderColor: '#e74c3c', fill: false },
-                { label: 'Lembap (%)', data: [], borderColor: '#3498db', fill: false },
-                { label: 'Gas (ppm)', data: [], borderColor: '#f1c40f', fill: false }
-            ]
-        },
-        options: { responsive: true, maintainAspectRatio: false }
-    });
-
-    // 3. AMBIL DATA
-    db.ref("Sensor").on("value", (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
+        // --- FUNGSI UPDATE DATA ---
+        db.ref("Sensor").on("value", (snap) => {
+            if(!isRunning) return;
+            
+            const data = snap.val();
             const time = new Date().toLocaleTimeString();
 
             // Update Angka
-            document.getElementById("val-t").innerText = data.Suhu;
-            document.getElementById("val-h").innerText = data.Kelembapan;
-            document.getElementById("val-g").innerText = data.KadarGas;
+            document.getElementById("txtSuhu").innerText = data.Suhu.toFixed(2);
+            document.getElementById("txtLembap").innerText = data.Kelembapan.toFixed(2);
+            document.getElementById("txtGas").innerText = data.KadarGas;
 
-            // Update Grafik
-            if (iotChart.data.labels.length > 10) {
+            // Update Grafik (Batasi 15 data)
+            if(iotChart.data.labels.length > 15) {
                 iotChart.data.labels.shift();
-                iotChart.data.datasets.forEach(dataset => dataset.data.shift());
+                iotChart.data.datasets.forEach(d => d.data.shift());
             }
             iotChart.data.labels.push(time);
             iotChart.data.datasets[0].data.push(data.Suhu);
             iotChart.data.datasets[1].data.push(data.Kelembapan);
             iotChart.data.datasets[2].data.push(data.KadarGas);
-            iotChart.update();
+            iotChart.update('none'); // Update tanpa animasi agar ringan
 
             // Update Tabel
-            const tableBody = document.getElementById("table-body");
-            const newRow = `<tr><td>${time}</td><td>${data.Suhu}</td><td>${data.Kelembapan}</td><td>${data.KadarGas}</td></tr>`;
-            tableBody.insertAdjacentHTML('afterbegin', newRow);
-            if (tableBody.rows.length > 5) tableBody.deleteRow(5);
+            const body = document.getElementById("tableBody");
+            const row = `<tr><td>${time}</td><td>${data.Suhu.toFixed(1)}°</td><td>${data.Kelembapan.toFixed(1)}%</td><td>${data.KadarGas}</td></tr>`;
+            body.insertAdjacentHTML('afterbegin', row);
+            if(body.rows.length > 10) body.deleteRow(10);
+        });
+
+        // --- KONTROL TOMBOL ---
+        document.getElementById("btnStart").onclick = () => {
+            isRunning = true;
+            document.getElementById("logStatus").className = "badge-status bg-success text-white";
+            document.getElementById("logStatus").innerHTML = '<i class="fas fa-sync-alt fa-spin me-1"></i> Live Logging';
         }
-    });
-</script>
+        document.getElementById("btnStop").onclick = () => {
+            isRunning = false;
+            document.getElementById("logStatus").className = "badge-status bg-danger text-white";
+            document.getElementById("logStatus").innerHTML = '<i class="fas fa-stop-circle me-1"></i> Stopped';
+        }
+        document.getElementById("btnReset").onclick = () => {
+            document.getElementById("tableBody").innerHTML = "";
+            iotChart.data.labels = [];
+            iotChart.data.datasets.forEach(d => d.data = []);
+            iotChart.update();
+        }
+    </script>
 </body>
 </html>

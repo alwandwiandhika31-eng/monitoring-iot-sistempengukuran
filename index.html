@@ -200,6 +200,37 @@
             iotChart.data.datasets.forEach(d => d.data = []);
             iotChart.update();
         }
+        // --- FITUR UPDATE JEDA KE FIREBASE ---
+const intervalInput = document.getElementById("intervalInput");
+
+// Fungsi ini akan jalan setiap kali kamu ganti angka di kotak Update (Detik)
+intervalInput.onchange = () => {
+    const nilaiJeda = parseInt(intervalInput.value);
+
+    // Validasi: Jeda minimal 1 detik agar ESP32 tidak error
+    if (nilaiJeda >= 1) {
+        // Kirim ke Firebase di path Settings/JedaUpdate
+        db.ref("Settings").update({
+            JedaUpdate: nilaiJeda
+        }).then(() => {
+            console.log("Jeda berhasil diupdate ke: " + nilaiJeda + " detik");
+            // Opsional: Kasih alert kecil kalau mau
+            // alert("Jeda Update Berhasil diubah!"); 
+        }).catch((error) => {
+            console.error("Gagal update jeda: ", error);
+        });
+    } else {
+        alert("Waduh cuok, jeda minimal harus 1 detik!");
+        intervalInput.value = 1; // Balikin ke 1 kalau user input 0
+    }
+};
+
+// Ambil nilai terakhir dari Firebase saat web baru dibuka (Biar sinkron)
+db.ref("Settings/JedaUpdate").once("value", (snapshot) => {
+    if (snapshot.exists()) {
+        intervalInput.value = snapshot.val();
+    }
+});
     </script>
 </body>
 </html>

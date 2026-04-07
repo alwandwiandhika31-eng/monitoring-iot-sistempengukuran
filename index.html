@@ -3,65 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IoT Analytics - Ultimate Pro Edition</title>
+    <title>IoT Analytics - Ultimate Edition + Animasi</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://bernii.github.io/gauge.js/dist/gauge.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/countup.js/1.9.3/countUp.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         :root { --bg-dark: #020617; --card-bg: rgba(15, 23, 42, 0.6); --accent: #3b82f6; }
         
         body { 
-            background-color: var(--bg-dark); color: #e2e8f0; font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-dark); 
+            color: #e2e8f0; 
+            font-family: 'Plus Jakarta Sans', sans-serif;
             background-image: radial-gradient(circle at 50% -20%, #1e293b 0%, #020617 80%);
-            min-height: 100vh; overflow-x: hidden;
-        }
-
-        /* CRT SCANLINE EFFECT */
-        body::after {
-            content: " "; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.05) 50%), 
-                        linear-gradient(90deg, rgba(255, 0, 0, 0.01), rgba(0, 255, 0, 0.005), rgba(0, 255, 0, 0.01));
-            background-size: 100% 4px, 4px 100%; pointer-events: none; z-index: 9999;
+            min-height: 100vh;
         }
         
         .header-glass { 
-            background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px); 
-            border-bottom: 1px solid rgba(255,255,255,0.05); position: sticky; top: 0; z-index: 1000; 
+            background: rgba(15, 23, 42, 0.8); 
+            backdrop-filter: blur(15px); 
+            border-bottom: 1px solid rgba(255,255,255,0.05); 
+            position: sticky; top: 0; z-index: 1000; 
         }
         
         .card-custom { 
-            background: var(--card-bg); backdrop-filter: blur(12px);
-            border: 1px solid rgba(255,255,255,0.1); border-radius: 1.5rem; 
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2); transition: 0.3s ease; height: 100%;
+            background: var(--card-bg); 
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.1); 
+            border-radius: 1.5rem; 
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);
+            /* Transisi Halus untuk Efek Hover */
+            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+            height: 100%;
         }
         
-        .card-custom:hover { transform: translateY(-8px); border-color: var(--accent); }
+        /* --- ANIMASI 2: Efek Kartu Hover Lift & Glow --- */
+        .card-custom:hover { 
+            transform: translateY(-8px); /* Terangkat ke atas */
+        }
+        
+        /* Glow spesifik sesuai warna sensor saat hover */
+        .card-temp:hover { border-color: #ef4444; box-shadow: 0 15px 30px rgba(239, 68, 68, 0.2); }
+        .card-hum:hover { border-color: #3b82f6; box-shadow: 0 15px 30px rgba(59, 130, 246, 0.2); }
+        .card-gas:hover { border-color: #f59e0b; box-shadow: 0 15px 30px rgba(245, 158, 11, 0.2); }
 
+        /* Progress Bar */
         .pg-bar { height: 6px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; margin: 15px 0; }
         .pg-inner { height: 100%; width: 0%; transition: width 1s ease-in-out; border-radius: 10px; }
+
+        /* --- ANIMASI 3: Indikator Koneksi Berdenyut --- */
+        .live-dot {
+            width: 10px; height: 10px; background: #10b981; border-radius: 50%;
+            display: inline-block; margin-right: 8px;
+            animation: pulse-dot 2s infinite; /* Berdenyut pelan */
+        }
+        @keyframes pulse-dot { 0% { transform: scale(0.9); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.5; } 100% { transform: scale(0.9); opacity: 1; } }
 
         @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
         .bg-danger-glow { animation: pulse-red 1.5s infinite; border-color: #ef4444 !important; background: rgba(239, 68, 68, 0.1) !important; }
 
         .stat-icon { width: 50px; height: 50px; border-radius: 15px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; font-size: 1.2rem; }
         .val-big { font-size: 2.5rem; font-weight: 800; letter-spacing: -1px; margin: 5px 0; }
+        .unit { font-size: 1rem; color: #94a3b8; margin-left: 4px; }
         
         .btn-action { border-radius: 15px; font-weight: 700; padding: 12px 25px; transition: 0.3s; border: none; }
         .btn-start { background: linear-gradient(135deg, #10b981, #059669); color: white; }
         .btn-stop { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
         
-        .badge-status { padding: 8px 16px; border-radius: 12px; font-size: 0.75rem; font-weight: 800; }
-        iframe { border-radius: 1.5rem; border: 1px solid rgba(255,255,255,0.1); height: 400px; width: 100%; }
-        canvas.gauge-canvas { width: 100% !important; max-width: 130px; margin: 10px auto; display: block; }
+        .badge-status { padding: 10px 20px; border-radius: 12px; font-size: 0.8rem; font-weight: 800; letter-spacing: 1px; }
+        
+        iframe { border-radius: 1.5rem; border: 1px solid rgba(255,255,255,0.1); height: 450px; width: 100%; opacity: 0.9; }
+        .table-dark { --bs-table-bg: transparent; border-color: rgba(255,255,255,0.05); }
+
+        canvas.gauge-canvas { width: 100% !important; height: auto !important; max-width: 150px; margin: 10px auto; display: block; }
     </style>
 </head>
 <body>
@@ -72,7 +93,7 @@
                 <div class="bg-primary p-2 rounded-3 me-3"><i class="fas fa-bolt text-white"></i></div>
                 <h4 class="mb-0 fw-800 text-white">IOT ANALYTICS <span class="text-primary">PRO</span></h4>
             </div>
-            <div id="logStatus" class="badge-status bg-dark border border-secondary text-secondary"><i class="fas fa-circle-notch me-2"></i>STANDBY</div>
+            <span id="logStatus" class="badge-status bg-dark border border-secondary text-secondary"><i class="fas fa-circle-notch me-2"></i>STANDBY</span>
         </div>
     </nav>
 
@@ -80,14 +101,15 @@
         <div class="row mb-5">
             <div class="col-12">
                 <div class="card-custom p-3 d-flex flex-wrap align-items-center gap-3">
-                    <button id="btnStart" class="btn-action btn-start"><i class="fas fa-play me-2"></i>START SYSTEM</button>
-                    <button id="btnStop" class="btn-action btn-stop"><i class="fas fa-power-off me-2"></i>STOP</button>
-                    <button id="btnReset" class="btn btn-outline-light border-secondary btn-action">CLEAR DATA</button>
+                    <button id="btnStart" class="btn-action btn-start shadow-lg"><i class="fas fa-play-circle me-2"></i>START LOGGING</button>
+                    <button id="btnStop" class="btn-action btn-stop shadow-lg"><i class="fas fa-power-off me-2"></i>STOP</button>
+                    <button id="btnReset" class="btn btn-outline-light border-secondary btn-action px-4">CLEAR LOG</button>
                     
                     <div class="ms-md-auto d-flex align-items-center gap-3 bg-black bg-opacity-25 p-2 px-3 rounded-pill border border-secondary">
-                        <span class="small text-secondary fw-bold">REFRESH:</span>
-                        <input type="number" id="intervalInput" class="form-control form-control-sm bg-transparent text-white border-0 text-center fw-bold" value="2" style="width: 40px;">
-                        <span class="small text-secondary">SEC</span>
+                        <span class="live-dot" id="liveDot" style="display:none;"></span>
+                        <span class="small text-secondary fw-bold">JEDA:</span>
+                        <input type="number" id="intervalInput" class="form-control form-control-sm bg-transparent text-white border-0 text-center fw-bold" value="2" style="width: 40px; outline: none;">
+                        <span class="small text-secondary">DETIK</span>
                     </div>
                 </div>
             </div>
@@ -95,38 +117,38 @@
 
         <div class="row g-4 mb-4 text-center">
             <div class="col-md-3">
-                <div class="card-custom p-4 card-temp">
-                    <div class="stat-icon bg-danger bg-opacity-20 text-danger mx-auto"><i class="fas fa-temperature-high"></i></div>
-                    <span class="text-secondary small fw-bold">TEMPERATURE</span>
-                    <div class="val-big text-white"><span id="txtSuhu">0.0</span><span style="font-size:1rem; color:#94a3b8">°C</span></div>
-                    <div class="pg-bar"><div id="barSuhu" class="pg-inner bg-danger"></div></div>
+                <div class="card-custom card-temp p-4">
+                    <div class="stat-icon bg-danger bg-opacity-20 text-danger mx-auto"><i class="fas fa-thermometer-half"></i></div>
+                    <span class="text-secondary small fw-bold">TEMPERATUR</span>
+                    <div class="val-big text-white"><span id="txtSuhu">0.0</span><span class="unit">°C</span></div>
+                    <div class="pg-bar"><div id="barSuhu" class="pg-inner bg-danger shadow-sm"></div></div>
                     <canvas id="gaugeSuhu" class="gauge-canvas"></canvas>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card-custom p-4 card-hum">
+                <div class="card-custom card-hum p-4">
                     <div class="stat-icon bg-info bg-opacity-20 text-info mx-auto"><i class="fas fa-droplet"></i></div>
-                    <span class="text-secondary small fw-bold">HUMIDITY</span>
-                    <div class="val-big text-white"><span id="txtLembap">0.0</span><span style="font-size:1rem; color:#94a3b8">%</span></div>
-                    <div class="pg-bar"><div id="barLembap" class="pg-inner bg-info"></div></div>
+                    <span class="text-secondary small fw-bold">KELEMBAPAN</span>
+                    <div class="val-big text-white"><span id="txtLembap">0.0</span><span class="unit">%</span></div>
+                    <div class="pg-bar"><div id="barLembap" class="pg-inner bg-info shadow-sm"></div></div>
                     <canvas id="gaugeLembap" class="gauge-canvas"></canvas>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card-custom p-4 card-gas">
+                <div class="card-custom card-gas p-4">
                     <div class="stat-icon bg-warning bg-opacity-20 text-warning mx-auto"><i class="fas fa-smog"></i></div>
-                    <span class="text-secondary small fw-bold">GAS LEVEL</span>
-                    <div class="val-big text-white"><span id="txtGas">0</span><span style="font-size:1rem; color:#94a3b8">ppm</span></div>
-                    <div class="pg-bar"><div id="barGas" class="pg-inner bg-warning"></div></div>
+                    <span class="text-secondary small fw-bold">KADAR GAS</span>
+                    <div class="val-big text-white"><span id="txtGas">0</span><span class="unit">ppm</span></div>
+                    <div class="pg-bar"><div id="barGas" class="pg-inner bg-warning shadow-sm"></div></div>
                     <canvas id="gaugeGas" class="gauge-canvas"></canvas>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="card-custom p-4" id="cardStatus">
-                    <div class="stat-icon bg-success bg-opacity-20 text-success mx-auto" id="iconStatus"><i class="fas fa-shield-halved"></i></div>
+                    <div class="stat-icon bg-success bg-opacity-20 text-success mx-auto" id="iconStatus"><i class="fas fa-shield-alt"></i></div>
                     <span class="text-secondary small fw-bold">STATUS</span>
                     <div class="val-big" id="txtStatus" style="color:#10b981">SAFE</div>
-                    <div class="mt-2 small opacity-50 text-secondary" id="lastUpdate">Awaiting...</div>
+                    <div class="mt-2 small opacity-50 text-secondary" id="lastUpdate">No Signal</div>
                 </div>
             </div>
         </div>
@@ -134,16 +156,18 @@
         <div class="row g-4 mb-4">
             <div class="col-lg-8">
                 <div class="card-custom p-4">
-                    <h6 class="fw-bold mb-4 small"><i class="fas fa-chart-line me-2 text-primary"></i>ANALYTICS GRAPH</h6>
-                    <div style="height: 300px;"><canvas id="iotChart"></canvas></div>
+                    <h6 class="fw-bold mb-4"><i class="fas fa-chart-line me-2 text-primary"></i>Analytics Stream</h6>
+                    <div style="height: 350px;"><canvas id="iotChart"></canvas></div>
                 </div>
             </div>
             <div class="col-lg-4">
                 <div class="card-custom p-4">
-                    <h6 class="fw-bold mb-3 small"><i class="fas fa-list me-2 text-info"></i>LIVE LOGS</h6>
-                    <div class="table-responsive" style="max-height: 280px;">
-                        <table class="table table-dark table-hover small">
-                            <thead><tr><th>Time</th><th>Temp</th><th>Gas</th></tr></thead>
+                    <h6 class="fw-bold mb-3"><i class="fas fa-history me-2 text-info"></i>History Lokal</h6>
+                    <div class="table-responsive" style="max-height: 330px;">
+                        <table class="table table-dark table-hover small align-middle">
+                            <thead class="text-secondary">
+                                <tr><th>Jam</th><th>Temp</th><th>Gas</th></tr>
+                            </thead>
                             <tbody id="tableBody"></tbody>
                         </table>
                     </div>
@@ -154,7 +178,7 @@
         <div class="row mb-5">
             <div class="col-12">
                 <div class="card-custom p-4">
-                    <h6 class="fw-bold mb-3 small text-secondary"><i class="fas fa-database me-2 text-success"></i>CLOUD DATA ARCHIVE</h6>
+                    <h6 class="fw-bold mb-3"><i class="fas fa-database me-2 text-success"></i>Cloud Storage Link</h6>
                     <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vS71wF9Gu0F__jdETIntozU_eVbgvtR4SmP9Nr-IuxKtWQERKs9UX4vcNyFDKIW-d3mTJb4poqiU4Ip/pubhtml?widget=true&amp;headers=false"></iframe>
                 </div>
             </div>
@@ -162,7 +186,6 @@
     </div>
 
     <script>
-        // 1. Firebase Inisialisasi
         const firebaseConfig = { databaseURL: "https://monitoring-iot-9ed03-default-rtdb.asia-southeast1.firebasedatabase.app/" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
@@ -170,16 +193,22 @@
         let isRunning = false;
         let lastStatus = "AMAN";
 
-        // 2. Gauges
-        const gOpts = { angle: -0.2, lineWidth: 0.2, radiusScale: 1, pointer: { length: 0.6, strokeWidth: 0.035, color: '#FFF' }, limitMax: false, limitMin: false, strokeColor: '#1e293b', generateGradient: true, highDpiSupport: true };
-        const gSuhu = new Gauge(document.getElementById('gaugeSuhu')).setOptions({...gOpts, staticZones: [{strokeStyle: "#3b82f6", min: 0, max: 25}, {strokeStyle: "#10b981", min: 25, max: 35}, {strokeStyle: "#ef4444", min: 35, max: 60}]});
-        gSuhu.maxValue = 60; gSuhu.set(0);
-        const gLembap = new Gauge(document.getElementById('gaugeLembap')).setOptions({...gOpts, colorStart: '#3b82f6'});
-        gLembap.maxValue = 100; gLembap.set(0);
-        const gGas = new Gauge(document.getElementById('gaugeGas')).setOptions({...gOpts, staticZones: [{strokeStyle: "#10b981", min: 0, max: 200}, {strokeStyle: "#f59e0b", min: 200, max: 500}, {strokeStyle: "#ef4444", min: 500, max: 1000}]});
-        gGas.maxValue = 1000; gGas.set(0);
+        // Gauge Setup
+        const gaugeOpts = {
+            angle: -0.2, lineWidth: 0.2, radiusScale: 1,
+            pointer: { length: 0.6, strokeWidth: 0.035, color: '#FFFFFF' },
+            limitMax: false, limitMin: false, strokeColor: '#1e293b', generateGradient: true, highDpiSupport: true,
+        };
 
-        // 3. Suara (Fitur Penting Jangan Hilang)
+        const gSuhu = new Gauge(document.getElementById('gaugeSuhu')).setOptions({...gaugeOpts, staticZones: [{strokeStyle: "#3b82f6", min: 0, max: 25}, {strokeStyle: "#10b981", min: 25, max: 35}, {strokeStyle: "#ef4444", min: 35, max: 60}]});
+        gSuhu.maxValue = 60; gSuhu.setMinValue(0); gSuhu.set(0);
+
+        const gLembap = new Gauge(document.getElementById('gaugeLembap')).setOptions({...gaugeOpts, colorStart: '#3b82f6'});
+        gLembap.maxValue = 100; gLembap.setMinValue(0); gLembap.set(0);
+
+        const gGas = new Gauge(document.getElementById('gaugeGas')).setOptions({...gaugeOpts, staticZones: [{strokeStyle: "#10b981", min: 0, max: 200}, {strokeStyle: "#f59e0b", min: 200, max: 500}, {strokeStyle: "#ef4444", min: 500, max: 1000}]});
+        gGas.maxValue = 1000; gGas.setMinValue(0); gGas.set(0);
+
         function speak(text) {
             if ('speechSynthesis' in window) {
                 const msg = new SpeechSynthesisUtterance();
@@ -188,99 +217,103 @@
             }
         }
 
-        // 4. Chart
         const ctx = document.getElementById('iotChart').getContext('2d');
         const iotChart = new Chart(ctx, {
             type: 'line',
-            data: { labels: [], datasets: [
-                { label: 'Temp', data: [], borderColor: '#ef4444', tension: 0.4, fill: false },
-                { label: 'Gas', data: [], borderColor: '#f59e0b', tension: 0.4, fill: false }
-            ]},
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true } } }
+            data: {
+                labels: [],
+                datasets: [
+                    { label: 'Suhu', data: [], borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', fill: true, tension: 0.4 },
+                    { label: 'Lembap', data: [], borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.4 },
+                    { label: 'Gas', data: [], borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, tension: 0.4 }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: '#94a3b8' } } },
+                scales: { x: { ticks: { color: '#94a3b8' }, grid: { display: false } }, y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } } }
+            }
         });
 
-        // 5. Animasi Angka (CountUp)
-        const cSuhu = new CountUp('txtSuhu', 0, { decimalPlaces: 1 });
-        const cLembap = new CountUp('txtLembap', 0, { decimalPlaces: 1 });
-        const cGas = new CountUp('txtGas', 0);
+        // --- ANIMASI 1: Inisialisasi CountUp (Animasi Angka Bergulir) ---
+        const optionsCount = { decimalPlaces: 1, duration: 1 }; // 1 desimal, durasi animasi 1 detik
+        const countSuhu = new CountUp('txtSuhu', 0, optionsCount);
+        const countLembap = new CountUp('txtLembap', 0, optionsCount);
+        // Khusus gas nggak pakai desimal
+        const countGas = new CountUp('txtGas', 0, { decimalPlaces: 0, duration: 1 });
 
-        // 6. MAIN FIREBASE LISTENER
         db.ref("Sensor").on("value", (snap) => {
+            if(!isRunning) return;
             const data = snap.val();
-            
-            // JANGAN JALAN JIKA SYSTEM STOP ATAU DATA KOSONG
-            if(!isRunning || !data) return;
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-            const time = new Date().toLocaleTimeString();
-            const s = data.Suhu || 0;
-            const l = data.Kelembapan || 0;
-            const g = data.KadarGas || 0;
-            const st = data.Status || "AMAN";
+            // Jalankan Animasi Update Angka
+            countSuhu.update(data.Suhu);
+            countLembap.update(data.Kelembapan);
+            countGas.update(data.KadarGas);
 
-            // Update UI Angka & Gauge
-            cSuhu.update(s); cLembap.update(l); cGas.update(g);
-            gSuhu.set(s); gLembap.set(l); gGas.set(g);
-            
-            // Update Progress Bar
-            document.getElementById("barSuhu").style.width = (s/60*100) + "%";
-            document.getElementById("barLembap").style.width = l + "%";
-            document.getElementById("barGas").style.width = (g/1000*100) + "%";
-            document.getElementById("lastUpdate").innerText = "Update: " + time;
+            document.getElementById("lastUpdate").innerText = "Last Sync: " + time;
 
-            // Status Logic & SweetAlert
-            const txtSt = document.getElementById("txtStatus");
-            const cardSt = document.getElementById("cardStatus");
-            const iconSt = document.getElementById("iconStatus");
+            // Update Progress Bars
+            document.getElementById("barSuhu").style.width = (data.Suhu / 60 * 100) + "%";
+            document.getElementById("barLembap").style.width = data.Kelembapan + "%";
+            document.getElementById("barGas").style.width = (data.KadarGas / 1000 * 100) + "%";
 
-            if(st === "BAHAYA") {
-                txtSt.innerText = "CRITICAL"; txtSt.style.color = "#ef4444";
-                cardSt.classList.add("bg-danger-glow");
-                iconSt.innerHTML = '<i class="fas fa-triangle-exclamation"></i>';
-                
-                if(lastStatus !== "BAHAYA") { 
-                    speak("Peringatan, kebocoran gas terdeteksi.");
-                    Swal.fire({ title: 'WARNING!', text: 'Gas Level High: ' + g + ' ppm', icon: 'error', background: '#020617', color: '#fff' });
-                    lastStatus = "BAHAYA";
-                }
+            gSuhu.set(data.Suhu);
+            gLembap.set(data.Kelembapan);
+            gGas.set(data.KadarGas);
+
+            const txtStatus = document.getElementById("txtStatus");
+            const iconStatus = document.getElementById("iconStatus");
+            const cardStatus = document.getElementById("cardStatus");
+
+            if(data.Status === "BAHAYA") {
+                txtStatus.innerText = "CRITICAL";
+                txtStatus.style.color = "#ef4444";
+                cardStatus.classList.add("bg-danger-glow");
+                iconStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+                iconStatus.className = "stat-icon bg-danger text-white mx-auto shadow-lg";
+                if(lastStatus !== "BAHAYA") { speak("Peringatan, terdeteksi kebocoran gas."); lastStatus = "BAHAYA"; }
             } else {
-                txtSt.innerText = "SAFE"; txtSt.style.color = "#10b981";
-                cardSt.classList.remove("bg-danger-glow");
-                iconSt.innerHTML = '<i class="fas fa-shield-halved"></i>';
+                txtStatus.innerText = "SAFE";
+                txtStatus.style.color = "#10b981";
+                cardStatus.classList.remove("bg-danger-glow");
+                iconStatus.innerHTML = '<i class="fas fa-shield-alt"></i>';
+                iconStatus.className = "stat-icon bg-success bg-opacity-20 text-success mx-auto";
                 lastStatus = "AMAN";
             }
 
-            // Update Chart & Table Log
-            if(iotChart.data.labels.length > 10) { 
-                iotChart.data.labels.shift(); 
-                iotChart.data.datasets.forEach(d => d.data.shift()); 
+            if(iotChart.data.labels.length > 15) {
+                iotChart.data.labels.shift();
+                iotChart.data.datasets.forEach(d => d.data.shift());
             }
             iotChart.data.labels.push(time);
-            iotChart.data.datasets[0].data.push(s);
-            iotChart.data.datasets[1].data.push(g);
+            iotChart.data.datasets[0].data.push(data.Suhu);
+            iotChart.data.datasets[1].data.push(data.Kelembapan);
+            iotChart.data.datasets[2].data.push(data.KadarGas);
             iotChart.update('none');
 
-            const row = `<tr><td>${time}</td><td>${s}°</td><td>${g}</td></tr>`;
-            document.getElementById("tableBody").insertAdjacentHTML('afterbegin', row);
-            if(document.getElementById("tableBody").rows.length > 10) document.getElementById("tableBody").deleteRow(10);
+            const body = document.getElementById("tableBody");
+            const row = `<tr><td class="text-secondary">${time}</td><td>${data.Suhu.toFixed(1)}°</td><td class="text-warning">${data.KadarGas}</td></tr>`;
+            body.insertAdjacentHTML('afterbegin', row);
+            if(body.rows.length > 10) body.deleteRow(10);
         });
 
-        // 7. Tombol-tombol Event
         document.getElementById("btnStart").onclick = () => {
             isRunning = true;
-            const ls = document.getElementById("logStatus");
-            ls.className = "badge-status bg-success text-white";
-            ls.innerHTML = '<i class="fas fa-sync fa-spin me-2"></i>RUNNING';
-            speak("Sistem diaktifkan.");
+            document.getElementById("liveDot").style.display = "inline-block"; // Tampilkan Dot Pulse
+            const logStatus = document.getElementById("logStatus");
+            logStatus.className = "badge-status bg-primary bg-opacity-20 text-primary border border-primary";
+            logStatus.innerHTML = '<i class="fas fa-satellite-dish fa-spin me-2"></i>LINK ACTIVE';
+            speak("Sistem monitoring diaktifkan.");
         };
-
         document.getElementById("btnStop").onclick = () => {
             isRunning = false;
-            const ls = document.getElementById("logStatus");
-            ls.className = "badge-status bg-dark text-secondary";
-            ls.innerHTML = '<i class="fas fa-power-off me-2"></i>SHUTDOWN';
-            speak("Sistem dimatikan.");
+            document.getElementById("liveDot").style.display = "none"; // Sembunyikan Dot Pulse
+            const logStatus = document.getElementById("logStatus");
+            logStatus.className = "badge-status bg-dark border border-secondary text-secondary";
+            logStatus.innerHTML = '<i class="fas fa-power-off me-2"></i>SHUTDOWN';
         };
-
         document.getElementById("btnReset").onclick = () => {
             document.getElementById("tableBody").innerHTML = "";
             iotChart.data.labels = [];
@@ -293,6 +326,10 @@
             const val = parseInt(intervalInput.value);
             if (val >= 1) db.ref("Settings").update({ JedaUpdate: val });
         };
+
+        db.ref("Settings/JedaUpdate").once("value", (snapshot) => {
+            if (snapshot.exists()) { intervalInput.value = snapshot.val(); }
+        });
     </script>
 </body>
 </html>

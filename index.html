@@ -28,13 +28,12 @@
             overflow-x: hidden;
         }
 
-        /* --- FITUR 1: CRT SCANLINE EFFECT --- */
         body::after {
             content: " ";
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.05) 50%), 
-                        linear-gradient(90deg, rgba(255, 0, 0, 0.01), rgba(0, 255, 0, 0.005), rgba(0, 0, 255, 0.01));
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.01), rgba(0, 255, 0, 0.005), rgba(0, 255, 0, 0.01));
             background-size: 100% 4px, 4px 100%;
             pointer-events: none;
             z-index: 9999;
@@ -53,14 +52,14 @@
             border: 1px solid rgba(255,255,255,0.1); 
             border-radius: 1.5rem; 
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);
-            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+            transition: transform 0.3s ease, border-color 0.3s ease;
             height: 100%;
         }
         
         .card-custom:hover { transform: translateY(-8px); }
-        .card-temp:hover { border-color: #ef4444; box-shadow: 0 15px 30px rgba(239, 68, 68, 0.2); }
-        .card-hum:hover { border-color: #3b82f6; box-shadow: 0 15px 30px rgba(59, 130, 246, 0.2); }
-        .card-gas:hover { border-color: #f59e0b; box-shadow: 0 15px 30px rgba(245, 158, 11, 0.2); }
+        .card-temp:hover { border-color: #ef4444; }
+        .card-hum:hover { border-color: #3b82f6; }
+        .card-gas:hover { border-color: #f59e0b; }
 
         .pg-bar { height: 6px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; margin: 15px 0; }
         .pg-inner { height: 100%; width: 0%; transition: width 1s ease-in-out; border-radius: 10px; }
@@ -89,10 +88,6 @@
         .table-dark { --bs-table-bg: transparent; border-color: rgba(255,255,255,0.05); }
 
         canvas.gauge-canvas { width: 100% !important; height: auto !important; max-width: 130px; margin: 10px auto; display: block; }
-        
-        /* Device Health Indicator */
-        .health-bar { font-size: 0.7rem; color: #64748b; font-weight: bold; }
-        .signal-icon { font-size: 0.9rem; margin-right: 5px; }
     </style>
 </head>
 <body>
@@ -104,10 +99,6 @@
                 <h4 class="mb-0 fw-800 text-white">IOT ANALYTICS <span class="text-primary">PRO</span></h4>
             </div>
             <div class="d-flex align-items-center gap-3">
-                <div class="health-bar d-none d-md-flex align-items-center bg-black bg-opacity-25 px-3 py-2 rounded-pill border border-secondary">
-                    <i class="fas fa-wifi signal-icon text-success" id="wifiIcon"></i> 
-                    <span id="wifiVal">SIGNAL: --%</span>
-                </div>
                 <span id="logStatus" class="badge-status bg-dark border border-secondary text-secondary"><i class="fas fa-circle-notch me-2"></i>STANDBY</span>
             </div>
         </div>
@@ -202,6 +193,7 @@
     </div>
 
     <script>
+        // 1. Inisialisasi Firebase
         const firebaseConfig = { databaseURL: "https://monitoring-iot-9ed03-default-rtdb.asia-southeast1.firebasedatabase.app/" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
@@ -209,6 +201,7 @@
         let isRunning = false;
         let lastStatus = "AMAN";
 
+        // 2. Konfigurasi Gauges
         const gaugeOpts = {
             angle: -0.2, lineWidth: 0.2, radiusScale: 1,
             pointer: { length: 0.6, strokeWidth: 0.035, color: '#FFFFFF' },
@@ -224,6 +217,7 @@
         const gGas = new Gauge(document.getElementById('gaugeGas')).setOptions({...gaugeOpts, staticZones: [{strokeStyle: "#10b981", min: 0, max: 200}, {strokeStyle: "#f59e0b", min: 200, max: 500}, {strokeStyle: "#ef4444", min: 500, max: 1000}]});
         gGas.maxValue = 1000; gGas.setMinValue(0); gGas.set(0);
 
+        // 3. Fungsi Suara
         function speak(text) {
             if ('speechSynthesis' in window) {
                 const msg = new SpeechSynthesisUtterance();
@@ -232,6 +226,7 @@
             }
         }
 
+        // 4. Inisialisasi Chart
         const ctx = document.getElementById('iotChart').getContext('2d');
         const iotChart = new Chart(ctx, {
             type: 'line',
@@ -250,34 +245,47 @@
             }
         });
 
+        // 5. Inisialisasi CountUp (Animasi Angka)
         const countSuhu = new CountUp('txtSuhu', 0, { decimalPlaces: 1, duration: 0.8 });
         const countLembap = new CountUp('txtLembap', 0, { decimalPlaces: 1, duration: 0.8 });
         const countGas = new CountUp('txtGas', 0, { decimalPlaces: 0, duration: 0.8 });
 
+        // 6. LOGIC UTAMA: Listen Data Firebase
         db.ref("Sensor").on("value", (snap) => {
-            if(!isRunning) return;
             const data = snap.val();
+            
+            // JANGAN JALAN JIKA SYSTEM STOP ATAU DATA KOSONG
+            if(!isRunning || !data) return;
+
             const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-            countSuhu.update(data.Suhu);
-            countLembap.update(data.Kelembapan);
-            countGas.update(data.KadarGas);
+            // Ambil data (pakai || 0 untuk jaga-jaga kalau key tidak ada di Firebase)
+            const vSuhu = data.Suhu || 0;
+            const vLembap = data.Kelembapan || 0;
+            const vGas = data.KadarGas || 0;
+            const vStatus = data.Status || "AMAN";
 
+            // Update UI Angka
+            countSuhu.update(vSuhu);
+            countLembap.update(vLembap);
+            countGas.update(vGas);
+
+            // Update Bar & Gauge
             document.getElementById("lastUpdate").innerText = "Last Update: " + time;
-            document.getElementById("barSuhu").style.width = (data.Suhu / 60 * 100) + "%";
-            document.getElementById("barLembap").style.width = data.Kelembapan + "%";
-            document.getElementById("barGas").style.width = (data.KadarGas / 1000 * 100) + "%";
+            document.getElementById("barSuhu").style.width = (vSuhu / 60 * 100) + "%";
+            document.getElementById("barLembap").style.width = vLembap + "%";
+            document.getElementById("barGas").style.width = (vGas / 1000 * 100) + "%";
 
-            gSuhu.set(data.Suhu);
-            gLembap.set(data.Kelembapan);
-            gGas.set(data.KadarGas);
+            gSuhu.set(vSuhu);
+            gLembap.set(vLembap);
+            gGas.set(vGas);
 
+            // Update Status & Alert
             const txtStatus = document.getElementById("txtStatus");
             const iconStatus = document.getElementById("iconStatus");
             const cardStatus = document.getElementById("cardStatus");
 
-            // --- FITUR 3: SweetAlert & Alarm Logic ---
-            if(data.Status === "BAHAYA") {
+            if(vStatus === "BAHAYA") {
                 txtStatus.innerText = "CRITICAL";
                 txtStatus.style.color = "#ef4444";
                 cardStatus.classList.add("bg-danger-glow");
@@ -288,7 +296,7 @@
                     speak("Peringatan, kebocoran gas terdeteksi."); 
                     Swal.fire({
                         title: 'EMERGENCY DETECTED',
-                        html: `<b style="color:#ef4444">GAS LEVEL: ${data.KadarGas} PPM</b><br>Ventilate the area immediately!`,
+                        html: `<b style="color:#ef4444">GAS LEVEL: ${vGas} PPM</b><br>Ventilate the area immediately!`,
                         icon: 'warning',
                         background: '#020617',
                         color: '#fff',
@@ -306,37 +314,43 @@
                 lastStatus = "AMAN";
             }
 
+            // Update Chart
             if(iotChart.data.labels.length > 15) {
                 iotChart.data.labels.shift();
                 iotChart.data.datasets.forEach(d => d.data.shift());
             }
             iotChart.data.labels.push(time);
-            iotChart.data.datasets[0].data.push(data.Suhu);
-            iotChart.data.datasets[1].data.push(data.Kelembapan);
-            iotChart.data.datasets[2].data.push(data.KadarGas);
+            iotChart.data.datasets[0].data.push(vSuhu);
+            iotChart.data.datasets[1].data.push(vLembap);
+            iotChart.data.datasets[2].data.push(vGas);
             iotChart.update('none');
 
+            // Update Table Log
             const body = document.getElementById("tableBody");
-            const row = `<tr><td>${time}</td><td>${data.Suhu.toFixed(1)}°</td><td class="text-warning">${data.KadarGas}</td></tr>`;
+            const row = `<tr><td>${time}</td><td>${vSuhu.toFixed(1)}°</td><td class="text-warning">${vGas}</td></tr>`;
             body.insertAdjacentHTML('afterbegin', row);
             if(body.rows.length > 10) body.deleteRow(10);
         });
 
+        // 7. Tombol-tombol
         document.getElementById("btnStart").onclick = () => {
             isRunning = true;
             document.getElementById("liveDot").style.display = "inline-block";
             const logStatus = document.getElementById("logStatus");
             logStatus.className = "badge-status bg-primary bg-opacity-20 text-primary border border-primary";
             logStatus.innerHTML = '<i class="fas fa-satellite-dish fa-spin me-2"></i>PRO ACTIVE';
-            speak("System activated.");
+            speak("Sistem diaktifkan.");
         };
+
         document.getElementById("btnStop").onclick = () => {
             isRunning = false;
             document.getElementById("liveDot").style.display = "none";
             const logStatus = document.getElementById("logStatus");
             logStatus.className = "badge-status bg-dark border border-secondary text-secondary";
             logStatus.innerHTML = '<i class="fas fa-power-off me-2"></i>SHUTDOWN';
+            speak("Sistem dimatikan.");
         };
+
         document.getElementById("btnReset").onclick = () => {
             document.getElementById("tableBody").innerHTML = "";
             iotChart.data.labels = [];

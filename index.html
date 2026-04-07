@@ -1,4 +1,4 @@
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -44,13 +44,13 @@
         .card-custom:hover { 
             transform: translateY(-8px); 
             border-color: var(--accent); 
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 20px rgba(59, 130, 246, 0.2); 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4); 
         }
 
         .stat-icon { 
             width: 60px; height: 60px; border-radius: 18px; 
             display: flex; align-items: center; justify-content: center; 
-            margin-bottom: 1.2rem; font-size: 1.5rem; position: relative;
+            margin-bottom: 1.2rem; font-size: 1.5rem;
         }
 
         .icon-temp { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
@@ -71,7 +71,7 @@
         .bg-danger-glow { animation: pulse-red 1.5s infinite; border-color: #ef4444 !important; background: rgba(239, 68, 68, 0.1) !important; }
 
         .val-big { font-size: 2.5rem; font-weight: 800; letter-spacing: -1px; }
-        .unit { font-size: 1rem; color: #94a3b8; margin-left: 4px; }
+        .unit { font-size: 1rem; color: #94a3b8; }
         
         .btn-action { border-radius: 15px; font-weight: 700; padding: 12px 25px; transition: 0.3s; border: none; }
         .btn-start { background: linear-gradient(135deg, #10b981, #059669); color: white; }
@@ -155,7 +155,7 @@
         <div class="row g-4 mb-4">
             <div class="col-lg-6">
                 <div class="card-custom p-4">
-                    <h6 class="fw-bold mb-4 text-primary"><i class="fas fa-chart-line me-2"></i>Temperature & Humidity (Interval 2s)</h6>
+                    <h6 class="fw-bold mb-4 text-primary"><i class="fas fa-chart-line me-2"></i>Temperature & Humidity (Step 2)</h6>
                     <div class="chart-container"><canvas id="chartTH"></canvas></div>
                 </div>
             </div>
@@ -206,38 +206,41 @@
             }
         }
 
-        // Gauges Initialization
+        // Gauges
         const gOpts = { angle: -0.2, lineWidth: 0.2, radiusScale: 1, pointer: { length: 0.6, strokeWidth: 0.035, color: '#FFF' }, limitMax: false, limitMin: false, strokeColor: '#1e293b', generateGradient: true, highDpiSupport: true };
         const gSuhu = new Gauge(document.getElementById('gaugeSuhu')).setOptions({...gOpts, staticZones: [{strokeStyle: "#3b82f6", min: 0, max: 25}, {strokeStyle: "#10b981", min: 25, max: 35}, {strokeStyle: "#ef4444", min: 35, max: 60}]});
         const gLembap = new Gauge(document.getElementById('gaugeLembap')).setOptions({...gOpts, colorStart: '#3b82f6'});
         const gGas = new Gauge(document.getElementById('gaugeGas')).setOptions({...gOpts, staticZones: [{strokeStyle: "#10b981", min: 0, max: 300}, {strokeStyle: "#f59e0b", min: 300, max: 600}, {strokeStyle: "#ef4444", min: 600, max: 1000}]});
         [gSuhu, gLembap, gGas].forEach(g => { g.maxValue = (g === gGas) ? 1000 : 100; g.setMinValue(0); g.set(0); });
 
-        // Charts Initialization
-        const commonScale = { x: { ticks: { color: '#94a3b8' }, grid: { display: false } }, y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } } };
-        
+        // Charts
         const chartTH = new Chart(document.getElementById('chartTH'), {
             type: 'line',
             data: { labels: [], datasets: [
                 { label: 'Suhu (°C)', data: [], borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', fill: true, tension: 0.4 },
                 { label: 'Lembap (%)', data: [], borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.4 }
             ]},
-            options: { responsive: true, maintainAspectRatio: false, scales: commonScale }
+            options: { 
+                responsive: true, maintainAspectRatio: false,
+                scales: { 
+                    x: { ticks: { color: '#94a3b8' }, grid: { display: false } }, 
+                    y: { ticks: { color: '#94a3b8', stepSize: 2 }, grid: { color: 'rgba(255,255,255,0.05)' } } 
+                }
+            }
         });
 
         const chartGas = new Chart(document.getElementById('chartGas'), {
             type: 'line',
             data: { labels: [], datasets: [{ label: 'Gas (PPM)', data: [], borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, tension: 0.4 }]},
-            options: { responsive: true, maintainAspectRatio: false, scales: commonScale }
+            options: { responsive: true, maintainAspectRatio: false, scales: { x: { ticks: { color: '#94a3b8' }, grid: { display: false } }, y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } } } }
         });
 
-        // Firebase Sync Logic
+        // Firebase Sync
         db.ref("Sensor").on("value", (snap) => {
             if(!isRunning) return;
             const data = snap.val();
             const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-            // Update Text & Gauges
             document.getElementById("txtSuhu").innerText = data.Suhu.toFixed(1);
             document.getElementById("txtLembap").innerText = data.Kelembapan.toFixed(1);
             document.getElementById("txtGas").innerText = data.KadarGas;
@@ -249,23 +252,20 @@
 
             gSuhu.set(data.Suhu); gLembap.set(data.Kelembapan); gGas.set(data.KadarGas);
 
-            // Status Alarm Logic
+            // Status Alarm
             const cardS = document.getElementById("cardStatus");
             const txtS = document.getElementById("txtStatus");
             if(data.Status === "BAHAYA") {
                 txtS.innerText = "CRITICAL"; txtS.style.color = "#ef4444"; cardS.classList.add("bg-danger-glow");
-                if(lastStatus !== "BAHAYA") { speak("Peringatan. Kadar gas berbahaya terdeteksi."); lastStatus = "BAHAYA"; }
+                if(lastStatus !== "BAHAYA") { speak("Peringatan. Gas bocor terdeteksi."); lastStatus = "BAHAYA"; }
             } else {
                 txtS.innerText = "SECURE"; txtS.style.color = "#10b981"; cardS.classList.remove("bg-danger-glow");
                 lastStatus = "AMAN";
             }
 
-            // Update Graphs (Limit 15 data points)
+            // Update Graphs (Limit 15 data)
             [chartTH, chartGas].forEach(c => { 
-                if(c.data.labels.length > 15) { 
-                    c.data.labels.shift(); 
-                    c.data.datasets.forEach(d => d.data.shift()); 
-                } 
+                if(c.data.labels.length > 15) { c.data.labels.shift(); c.data.datasets.forEach(d => d.data.shift()); } 
                 c.data.labels.push(time); 
             });
             chartTH.data.datasets[0].data.push(data.Suhu);
@@ -273,29 +273,27 @@
             chartGas.data.datasets[0].data.push(data.KadarGas);
             chartTH.update('none'); chartGas.update('none');
 
-            // Log Table Sync
+            // Log Table
             const body = document.getElementById("tableBody");
             body.insertAdjacentHTML('afterbegin', `<tr><td>${time}</td><td>${data.Suhu.toFixed(1)}°</td><td>${data.KadarGas}</td></tr>`);
             if(body.rows.length > 10) body.deleteRow(10);
         });
 
-        // Control Panel Events
+        // Control Logic
         document.getElementById("btnStart").onclick = () => {
             isRunning = true;
             document.getElementById("liveDot").style.display = "inline-block";
-            const logStatus = document.getElementById("logStatus");
-            logStatus.className = "badge-status bg-success text-white";
-            logStatus.innerText = "ACTIVE";
-            speak("Sistem diaktifkan.");
+            document.getElementById("logStatus").className = "badge-status bg-success text-white";
+            document.getElementById("logStatus").innerText = "ACTIVE";
+            speak("Sistem di aktifkan.");
         };
 
         document.getElementById("btnStop").onclick = () => {
             isRunning = false;
             document.getElementById("liveDot").style.display = "none";
-            const logStatus = document.getElementById("logStatus");
-            logStatus.className = "badge-status bg-dark border border-secondary text-secondary";
-            logStatus.innerText = "OFFLINE";
-            speak("Sistem dimatikan.");
+            document.getElementById("logStatus").className = "badge-status bg-dark border border-secondary text-secondary";
+            document.getElementById("logStatus").innerText = "OFFLINE";
+            speak("Sistem di matikan.");
         };
 
         document.getElementById("btnReset").onclick = () => {

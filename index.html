@@ -17,8 +17,8 @@
         :root { --bg-dark: #0b0f19; --card-bg: #161c2d; --accent: #3b82f6; }
         body { background-color: var(--bg-dark); color: #e2e8f0; font-family: 'Plus Jakarta Sans', sans-serif; }
         
-        .header-glass { background: rgba(22, 28, 45, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid #2d3748; sticky: top; }
-        .card-custom { background: var(--card-bg); border: 1px solid #2d3748; border-radius: 1.25rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); }
+        .header-glass { background: rgba(22, 28, 45, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid #2d3748; position: sticky; top: 0; z-index: 1000; }
+        .card-custom { background: var(--card-bg); border: 1px solid #2d3748; border-radius: 1.25rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); transition: 0.3s; }
         
         .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; }
         .val-big { font-size: 2.25rem; font-weight: 800; letter-spacing: -1px; }
@@ -31,12 +31,17 @@
         .table-custom { color: #cbd5e1; border-color: #2d3748; }
         .badge-status { padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; text-transform: uppercase; font-weight: 700; }
         
+        /* Animasi berkedip untuk tanda Bahaya */
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+        .status-danger { color: #ef4444 !important; animation: blink 1s infinite; }
+        .status-safe { color: #10b981 !important; }
+
         iframe { border-radius: 1.25rem; border: 1px solid #2d3748; height: 450px; width: 100%; }
     </style>
 </head>
 <body>
 
-    <nav class="header-glass py-3 mb-4 sticky-top">
+    <nav class="header-glass py-3 mb-4">
         <div class="container d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center">
                 <i class="fas fa-bolt text-warning me-2 fs-4"></i>
@@ -63,25 +68,32 @@
         </div>
 
         <div class="row g-4 mb-4">
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="card-custom p-4">
                     <div class="stat-icon bg-danger bg-opacity-10 text-danger"><i class="fas fa-thermometer-half"></i></div>
                     <p class="text-secondary mb-1">Temperatur</p>
-                    <div class="val-big text-white"><span id="txtSuhu">0.00</span><span class="unit">°C</span></div>
+                    <div class="val-big text-white"><span id="txtSuhu">0.0</span><span class="unit">°C</span></div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="card-custom p-4">
                     <div class="stat-icon bg-info bg-opacity-10 text-info"><i class="fas fa-droplet"></i></div>
                     <p class="text-secondary mb-1">Kelembapan</p>
-                    <div class="val-big text-white"><span id="txtLembap">0.00</span><span class="unit">%</span></div>
+                    <div class="val-big text-white"><span id="txtLembap">0.0</span><span class="unit">%</span></div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="card-custom p-4">
-                    <div class="stat-icon bg-warning bg-opacity-10 text-warning"><i class="fas fa-mask-ventilator"></i></div>
+                    <div class="stat-icon bg-warning bg-opacity-10 text-warning"><i class="fas fa-smog"></i></div>
                     <p class="text-secondary mb-1">Kadar Gas</p>
                     <div class="val-big text-white"><span id="txtGas">0</span><span class="unit">ppm</span></div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card-custom p-4" id="cardStatus">
+                    <div class="stat-icon bg-success bg-opacity-10 text-success" id="iconStatus"><i class="fas fa-shield-alt"></i></div>
+                    <p class="text-secondary mb-1">Status Keamanan</p>
+                    <div class="val-big status-safe" id="txtStatus">AMAN</div>
                 </div>
             </div>
         </div>
@@ -121,7 +133,6 @@
     </div>
 
     <script>
-        // --- KONFIGURASI FIREBASE ---
         const firebaseConfig = {
             databaseURL: "https://monitoring-iot-9ed03-default-rtdb.asia-southeast1.firebasedatabase.app/"
         };
@@ -130,7 +141,6 @@
 
         let isRunning = false;
         
-        // --- INISIALISASI CHART ---
         const ctx = document.getElementById('iotChart').getContext('2d');
         const iotChart = new Chart(ctx, {
             type: 'line',
@@ -161,9 +171,25 @@
             const time = new Date().toLocaleTimeString();
 
             // Update Angka
-            document.getElementById("txtSuhu").innerText = data.Suhu.toFixed(2);
-            document.getElementById("txtLembap").innerText = data.Kelembapan.toFixed(2);
+            document.getElementById("txtSuhu").innerText = data.Suhu.toFixed(1);
+            document.getElementById("txtLembap").innerText = data.Kelembapan.toFixed(1);
             document.getElementById("txtGas").innerText = data.KadarGas;
+
+            // --- LOGIKA STATUS BAHAYA DI WEB ---
+            const txtStatus = document.getElementById("txtStatus");
+            const iconStatus = document.getElementById("iconStatus");
+            
+            if(data.Status === "BAHAYA") {
+                txtStatus.innerText = "BAHAYA!";
+                txtStatus.className = "val-big status-danger";
+                iconStatus.className = "stat-icon bg-danger bg-opacity-20 text-danger";
+                iconStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+            } else {
+                txtStatus.innerText = "AMAN";
+                txtStatus.className = "val-big status-safe";
+                iconStatus.className = "stat-icon bg-success bg-opacity-10 text-success";
+                iconStatus.innerHTML = '<i class="fas fa-shield-alt"></i>';
+            }
 
             // Update Grafik (Batasi 15 data)
             if(iotChart.data.labels.length > 15) {
@@ -174,7 +200,7 @@
             iotChart.data.datasets[0].data.push(data.Suhu);
             iotChart.data.datasets[1].data.push(data.Kelembapan);
             iotChart.data.datasets[2].data.push(data.KadarGas);
-            iotChart.update('none'); // Update tanpa animasi agar ringan
+            iotChart.update('none');
 
             // Update Tabel
             const body = document.getElementById("tableBody");
@@ -200,37 +226,22 @@
             iotChart.data.datasets.forEach(d => d.data = []);
             iotChart.update();
         }
-        // --- FITUR UPDATE JEDA KE FIREBASE ---
-const intervalInput = document.getElementById("intervalInput");
 
-// Fungsi ini akan jalan setiap kali kamu ganti angka di kotak Update (Detik)
-intervalInput.onchange = () => {
-    const nilaiJeda = parseInt(intervalInput.value);
+        // --- FITUR UPDATE JEDA ---
+        const intervalInput = document.getElementById("intervalInput");
+        intervalInput.onchange = () => {
+            const nilaiJeda = parseInt(intervalInput.value);
+            if (nilaiJeda >= 1) {
+                db.ref("Settings").update({ JedaUpdate: nilaiJeda });
+            } else {
+                alert("Jeda minimal 1 detik!");
+                intervalInput.value = 1;
+            }
+        };
 
-    // Validasi: Jeda minimal 1 detik agar ESP32 tidak error
-    if (nilaiJeda >= 1) {
-        // Kirim ke Firebase di path Settings/JedaUpdate
-        db.ref("Settings").update({
-            JedaUpdate: nilaiJeda
-        }).then(() => {
-            console.log("Jeda berhasil diupdate ke: " + nilaiJeda + " detik");
-            // Opsional: Kasih alert kecil kalau mau
-            // alert("Jeda Update Berhasil diubah!"); 
-        }).catch((error) => {
-            console.error("Gagal update jeda: ", error);
+        db.ref("Settings/JedaUpdate").once("value", (snapshot) => {
+            if (snapshot.exists()) { intervalInput.value = snapshot.val(); }
         });
-    } else {
-        alert("Waduh cuok, jeda minimal harus 1 detik!");
-        intervalInput.value = 1; // Balikin ke 1 kalau user input 0
-    }
-};
-
-// Ambil nilai terakhir dari Firebase saat web baru dibuka (Biar sinkron)
-db.ref("Settings/JedaUpdate").once("value", (snapshot) => {
-    if (snapshot.exists()) {
-        intervalInput.value = snapshot.val();
-    }
-});
     </script>
 </body>
 </html>

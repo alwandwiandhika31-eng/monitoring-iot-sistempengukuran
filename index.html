@@ -155,7 +155,7 @@
         <div class="row g-4 mb-4">
             <div class="col-lg-6">
                 <div class="card-custom p-4">
-                    <h6 class="fw-bold mb-4 text-primary"><i class="fas fa-chart-line me-2"></i>Temperature & Humidity (Step 2)</h6>
+                    <h6 class="fw-bold mb-4 text-primary"><i class="fas fa-chart-line me-2"></i>Temp & Humid (Scale Interval 2)</h6>
                     <div class="chart-container"><canvas id="chartTH"></canvas></div>
                 </div>
             </div>
@@ -213,7 +213,7 @@
         const gGas = new Gauge(document.getElementById('gaugeGas')).setOptions({...gOpts, staticZones: [{strokeStyle: "#10b981", min: 0, max: 300}, {strokeStyle: "#f59e0b", min: 300, max: 600}, {strokeStyle: "#ef4444", min: 600, max: 1000}]});
         [gSuhu, gLembap, gGas].forEach(g => { g.maxValue = (g === gGas) ? 1000 : 100; g.setMinValue(0); g.set(0); });
 
-        // Charts
+        // Chart Suhu & Lembap (INTERVAL 2)
         const chartTH = new Chart(document.getElementById('chartTH'), {
             type: 'line',
             data: { labels: [], datasets: [
@@ -224,11 +224,18 @@
                 responsive: true, maintainAspectRatio: false,
                 scales: { 
                     x: { ticks: { color: '#94a3b8' }, grid: { display: false } }, 
-                    y: { ticks: { color: '#94a3b8', stepSize: 2 }, grid: { color: 'rgba(255,255,255,0.05)' } } 
+                    y: { 
+                        ticks: { 
+                            color: '#94a3b8', 
+                            stepSize: 2 // Sesuai permintaan: Interval skala loncat 2
+                        }, 
+                        grid: { color: 'rgba(255,255,255,0.05)' } 
+                    } 
                 }
             }
         });
 
+        // Chart Gas (Normal)
         const chartGas = new Chart(document.getElementById('chartGas'), {
             type: 'line',
             data: { labels: [], datasets: [{ label: 'Gas (PPM)', data: [], borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, tension: 0.4 }]},
@@ -257,7 +264,7 @@
             const txtS = document.getElementById("txtStatus");
             if(data.Status === "BAHAYA") {
                 txtS.innerText = "CRITICAL"; txtS.style.color = "#ef4444"; cardS.classList.add("bg-danger-glow");
-                if(lastStatus !== "BAHAYA") { speak("Peringatan. Gas bocor terdeteksi."); lastStatus = "BAHAYA"; }
+                if(lastStatus !== "BAHAYA") { speak("Peringatan. Gas berbahaya terdeteksi."); lastStatus = "BAHAYA"; }
             } else {
                 txtS.innerText = "SECURE"; txtS.style.color = "#10b981"; cardS.classList.remove("bg-danger-glow");
                 lastStatus = "AMAN";

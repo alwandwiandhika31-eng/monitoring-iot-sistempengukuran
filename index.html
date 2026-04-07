@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -81,6 +81,7 @@
         
         iframe { border-radius: 1.5rem; border: 1px solid rgba(255,255,255,0.1); height: 400px; width: 100%; }
         canvas.gauge-canvas { width: 100% !important; max-width: 150px; margin: 10px auto; display: block; }
+        .chart-container { height: 320px; position: relative; }
     </style>
 </head>
 <body>
@@ -154,14 +155,14 @@
         <div class="row g-4 mb-4">
             <div class="col-lg-6">
                 <div class="card-custom p-4">
-                    <h6 class="fw-bold mb-4 text-primary"><i class="fas fa-chart-line me-2"></i>Temp & Humidity</h6>
-                    <div style="height: 300px;"><canvas id="chartTH"></canvas></div>
+                    <h6 class="fw-bold mb-4 text-primary"><i class="fas fa-chart-line me-2"></i>Temperature & Humidity (Interval 2s)</h6>
+                    <div class="chart-container"><canvas id="chartTH"></canvas></div>
                 </div>
             </div>
             <div class="col-lg-6">
                 <div class="card-custom p-4">
-                    <h6 class="fw-bold mb-4 text-warning"><i class="fas fa-biohazard me-2"></i>Gas Concentration</h6>
-                    <div style="height: 300px;"><canvas id="chartGas"></canvas></div>
+                    <h6 class="fw-bold mb-4 text-warning"><i class="fas fa-biohazard me-2"></i>Gas Concentration Analysis</h6>
+                    <div class="chart-container"><canvas id="chartGas"></canvas></div>
                 </div>
             </div>
         </div>
@@ -180,7 +181,7 @@
             </div>
             <div class="col-lg-8">
                 <div class="card-custom p-4">
-                    <h6 class="fw-bold mb-3"><i class="fas fa-server me-2"></i>Cloud Sync</h6>
+                    <h6 class="fw-bold mb-3"><i class="fas fa-server me-2"></i>Cloud Sync (Google Sheets)</h6>
                     <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vS71wF9Gu0F__jdETIntozU_eVbgvtR4SmP9Nr-IuxKtWQERKs9UX4vcNyFDKIW-d3mTJb4poqiU4Ip/pubhtml?widget=true&amp;headers=false"></iframe>
                 </div>
             </div>
@@ -205,37 +206,38 @@
             }
         }
 
-        // Gauges
+        // Gauges Initialization
         const gOpts = { angle: -0.2, lineWidth: 0.2, radiusScale: 1, pointer: { length: 0.6, strokeWidth: 0.035, color: '#FFF' }, limitMax: false, limitMin: false, strokeColor: '#1e293b', generateGradient: true, highDpiSupport: true };
         const gSuhu = new Gauge(document.getElementById('gaugeSuhu')).setOptions({...gOpts, staticZones: [{strokeStyle: "#3b82f6", min: 0, max: 25}, {strokeStyle: "#10b981", min: 25, max: 35}, {strokeStyle: "#ef4444", min: 35, max: 60}]});
         const gLembap = new Gauge(document.getElementById('gaugeLembap')).setOptions({...gOpts, colorStart: '#3b82f6'});
         const gGas = new Gauge(document.getElementById('gaugeGas')).setOptions({...gOpts, staticZones: [{strokeStyle: "#10b981", min: 0, max: 300}, {strokeStyle: "#f59e0b", min: 300, max: 600}, {strokeStyle: "#ef4444", min: 600, max: 1000}]});
         [gSuhu, gLembap, gGas].forEach(g => { g.maxValue = (g === gGas) ? 1000 : 100; g.setMinValue(0); g.set(0); });
 
-        // Charts
+        // Charts Initialization
         const commonScale = { x: { ticks: { color: '#94a3b8' }, grid: { display: false } }, y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } } };
         
         const chartTH = new Chart(document.getElementById('chartTH'), {
             type: 'line',
             data: { labels: [], datasets: [
-                { label: 'Suhu', data: [], borderColor: '#ef4444', tension: 0.4 },
-                { label: 'Lembap', data: [], borderColor: '#3b82f6', tension: 0.4 }
+                { label: 'Suhu (°C)', data: [], borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', fill: true, tension: 0.4 },
+                { label: 'Lembap (%)', data: [], borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.4 }
             ]},
             options: { responsive: true, maintainAspectRatio: false, scales: commonScale }
         });
 
         const chartGas = new Chart(document.getElementById('chartGas'), {
             type: 'line',
-            data: { labels: [], datasets: [{ label: 'Gas', data: [], borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, tension: 0.4 }]},
+            data: { labels: [], datasets: [{ label: 'Gas (PPM)', data: [], borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, tension: 0.4 }]},
             options: { responsive: true, maintainAspectRatio: false, scales: commonScale }
         });
 
-        // Firebase Sync
+        // Firebase Sync Logic
         db.ref("Sensor").on("value", (snap) => {
             if(!isRunning) return;
             const data = snap.val();
             const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
+            // Update Text & Gauges
             document.getElementById("txtSuhu").innerText = data.Suhu.toFixed(1);
             document.getElementById("txtLembap").innerText = data.Kelembapan.toFixed(1);
             document.getElementById("txtGas").innerText = data.KadarGas;
@@ -247,44 +249,52 @@
 
             gSuhu.set(data.Suhu); gLembap.set(data.Kelembapan); gGas.set(data.KadarGas);
 
-            // Status Logic
+            // Status Alarm Logic
             const cardS = document.getElementById("cardStatus");
             const txtS = document.getElementById("txtStatus");
             if(data.Status === "BAHAYA") {
                 txtS.innerText = "CRITICAL"; txtS.style.color = "#ef4444"; cardS.classList.add("bg-danger-glow");
-                if(lastStatus !== "BAHAYA") { speak("Peringatan. Gas bocor terdeteksi."); lastStatus = "BAHAYA"; }
+                if(lastStatus !== "BAHAYA") { speak("Peringatan. Kadar gas berbahaya terdeteksi."); lastStatus = "BAHAYA"; }
             } else {
                 txtS.innerText = "SECURE"; txtS.style.color = "#10b981"; cardS.classList.remove("bg-danger-glow");
                 lastStatus = "AMAN";
             }
 
-            // Update Charts
-            [chartTH, chartGas].forEach(c => { if(c.data.labels.length > 15) { c.data.labels.shift(); c.data.datasets.forEach(d => d.data.shift()); } c.data.labels.push(time); });
+            // Update Graphs (Limit 15 data points)
+            [chartTH, chartGas].forEach(c => { 
+                if(c.data.labels.length > 15) { 
+                    c.data.labels.shift(); 
+                    c.data.datasets.forEach(d => d.data.shift()); 
+                } 
+                c.data.labels.push(time); 
+            });
             chartTH.data.datasets[0].data.push(data.Suhu);
             chartTH.data.datasets[1].data.push(data.Kelembapan);
             chartGas.data.datasets[0].data.push(data.KadarGas);
             chartTH.update('none'); chartGas.update('none');
 
-            // Table Log
+            // Log Table Sync
             const body = document.getElementById("tableBody");
             body.insertAdjacentHTML('afterbegin', `<tr><td>${time}</td><td>${data.Suhu.toFixed(1)}°</td><td>${data.KadarGas}</td></tr>`);
             if(body.rows.length > 10) body.deleteRow(10);
         });
 
-        // Buttons
+        // Control Panel Events
         document.getElementById("btnStart").onclick = () => {
             isRunning = true;
             document.getElementById("liveDot").style.display = "inline-block";
-            document.getElementById("logStatus").className = "badge-status bg-success text-white";
-            document.getElementById("logStatus").innerText = "ACTIVE";
+            const logStatus = document.getElementById("logStatus");
+            logStatus.className = "badge-status bg-success text-white";
+            logStatus.innerText = "ACTIVE";
             speak("Sistem diaktifkan.");
         };
 
         document.getElementById("btnStop").onclick = () => {
             isRunning = false;
             document.getElementById("liveDot").style.display = "none";
-            document.getElementById("logStatus").className = "badge-status bg-dark border border-secondary text-secondary";
-            document.getElementById("logStatus").innerText = "OFFLINE";
+            const logStatus = document.getElementById("logStatus");
+            logStatus.className = "badge-status bg-dark border border-secondary text-secondary";
+            logStatus.innerText = "OFFLINE";
             speak("Sistem dimatikan.");
         };
 

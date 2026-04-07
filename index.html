@@ -47,7 +47,26 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 20px rgba(59, 130, 246, 0.2); 
         }
 
-        /* Animated Progress Bar */
+        /* Ikon Keren dengan Glow */
+        .stat-icon { 
+            width: 60px; 
+            height: 60px; 
+            border-radius: 18px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            margin-bottom: 1.2rem; 
+            font-size: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .icon-temp { background: rgba(239, 68, 68, 0.15); color: #ef4444; box-shadow: 0 0 15px rgba(239, 68, 68, 0.2); }
+        .icon-hum { background: rgba(59, 130, 246, 0.15); color: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.2); }
+        .icon-gas { background: rgba(245, 158, 11, 0.15); color: #f59e0b; box-shadow: 0 0 15px rgba(245, 158, 11, 0.2); }
+        .icon-status { background: rgba(16, 185, 129, 0.15); color: #10b981; box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); }
+
+        /* Progress Bar */
         .pg-bar { height: 6px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; margin: 15px 0; }
         .pg-inner { height: 100%; width: 0%; transition: width 1s ease-in-out; border-radius: 10px; }
 
@@ -61,7 +80,6 @@
         @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
         .bg-danger-glow { animation: pulse-red 1.5s infinite; border-color: #ef4444 !important; background: rgba(239, 68, 68, 0.1) !important; }
 
-        .stat-icon { width: 50px; height: 50px; border-radius: 15px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; font-size: 1.2rem; }
         .val-big { font-size: 2.5rem; font-weight: 800; letter-spacing: -1px; margin: 5px 0; }
         .unit { font-size: 1rem; color: #94a3b8; margin-left: 4px; }
         
@@ -72,8 +90,6 @@
         .badge-status { padding: 10px 20px; border-radius: 12px; font-size: 0.8rem; font-weight: 800; letter-spacing: 1px; }
         
         iframe { border-radius: 1.5rem; border: 1px solid rgba(255,255,255,0.1); height: 450px; width: 100%; opacity: 0.9; }
-        .table-dark { --bs-table-bg: transparent; border-color: rgba(255,255,255,0.05); }
-
         canvas.gauge-canvas { width: 100% !important; height: auto !important; max-width: 150px; margin: 10px auto; display: block; }
     </style>
 </head>
@@ -82,8 +98,8 @@
     <nav class="header-glass py-3 mb-4">
         <div class="container d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center">
-                <div class="bg-primary p-2 rounded-3 me-3"><i class="fas fa-bolt text-white"></i></div>
-                <h4 class="mb-0 fw-800 text-white">IOT ANALYTICS <span class="text-primary">PRO</span></h4>
+                <div class="bg-primary p-2 rounded-3 me-3"><i class="fas fa-microchip text-white"></i></div>
+                <h4 class="mb-0 fw-800 text-white">SYSTEM <span class="text-primary">DASHBOARD</span></h4>
             </div>
             <span id="logStatus" class="badge-status bg-dark border border-secondary text-secondary"><i class="fas fa-circle-notch me-2"></i>STANDBY</span>
         </div>
@@ -93,15 +109,15 @@
         <div class="row mb-5">
             <div class="col-12">
                 <div class="card-custom p-3 d-flex flex-wrap align-items-center gap-3">
-                    <button id="btnStart" class="btn-action btn-start shadow-lg"><i class="fas fa-play-circle me-2"></i>START LOGGING</button>
-                    <button id="btnStop" class="btn-action btn-stop shadow-lg"><i class="fas fa-power-off me-2"></i>STOP</button>
-                    <button id="btnReset" class="btn btn-outline-light border-secondary btn-action px-4">CLEAR LOG</button>
+                    <button id="btnStart" class="btn-action btn-start shadow-lg"><i class="fas fa-power-off me-2"></i>BOOT SYSTEM</button>
+                    <button id="btnStop" class="btn-action btn-stop shadow-lg"><i class="fas fa-terminal me-2"></i>SHUTDOWN</button>
+                    <button id="btnReset" class="btn btn-outline-light border-secondary btn-action px-4">CLEAR LOGS</button>
                     
                     <div class="ms-md-auto d-flex align-items-center gap-3 bg-black bg-opacity-25 p-2 px-3 rounded-pill border border-secondary">
                         <span class="live-dot" id="liveDot" style="display:none;"></span>
-                        <span class="small text-secondary fw-bold">JEDA:</span>
+                        <span class="small text-secondary fw-bold">REFRESH:</span>
                         <input type="number" id="intervalInput" class="form-control form-control-sm bg-transparent text-white border-0 text-center fw-bold" value="2" style="width: 40px; outline: none;">
-                        <span class="small text-secondary">DETIK</span>
+                        <span class="small text-secondary">SEC</span>
                     </div>
                 </div>
             </div>
@@ -110,37 +126,37 @@
         <div class="row g-4 mb-4 text-center">
             <div class="col-md-3">
                 <div class="card-custom p-4">
-                    <div class="stat-icon bg-danger bg-opacity-20 text-danger mx-auto"><i class="fas fa-thermometer-half"></i></div>
-                    <span class="text-secondary small fw-bold">TEMPERATUR</span>
+                    <div class="stat-icon icon-temp mx-auto"><i class="fas fa-temperature-high"></i></div>
+                    <span class="text-secondary small fw-bold">TEMPERATURE</span>
                     <div class="val-big text-white"><span id="txtSuhu">0.0</span><span class="unit">°C</span></div>
-                    <div class="pg-bar"><div id="barSuhu" class="pg-inner bg-danger shadow-sm" style="box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);"></div></div>
+                    <div class="pg-bar"><div id="barSuhu" class="pg-inner bg-danger shadow-sm"></div></div>
                     <canvas id="gaugeSuhu" class="gauge-canvas"></canvas>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="card-custom p-4">
-                    <div class="stat-icon bg-info bg-opacity-20 text-info mx-auto"><i class="fas fa-droplet"></i></div>
-                    <span class="text-secondary small fw-bold">KELEMBAPAN</span>
+                    <div class="stat-icon icon-hum mx-auto"><i class="fas fa-faucet-drip"></i></div>
+                    <span class="text-secondary small fw-bold">HUMIDITY</span>
                     <div class="val-big text-white"><span id="txtLembap">0.0</span><span class="unit">%</span></div>
-                    <div class="pg-bar"><div id="barLembap" class="pg-inner bg-info shadow-sm" style="box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);"></div></div>
+                    <div class="pg-bar"><div id="barLembap" class="pg-inner bg-info shadow-sm"></div></div>
                     <canvas id="gaugeLembap" class="gauge-canvas"></canvas>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="card-custom p-4">
-                    <div class="stat-icon bg-warning bg-opacity-20 text-warning mx-auto"><i class="fas fa-smog"></i></div>
-                    <span class="text-secondary small fw-bold">KADAR GAS</span>
+                    <div class="stat-icon icon-gas mx-auto"><i class="fas fa-wind"></i></div>
+                    <span class="text-secondary small fw-bold">GAS CONCENTRATION</span>
                     <div class="val-big text-white"><span id="txtGas">0</span><span class="unit">ppm</span></div>
-                    <div class="pg-bar"><div id="barGas" class="pg-inner bg-warning shadow-sm" style="box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);"></div></div>
+                    <div class="pg-bar"><div id="barGas" class="pg-inner bg-warning shadow-sm"></div></div>
                     <canvas id="gaugeGas" class="gauge-canvas"></canvas>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="card-custom p-4" id="cardStatus">
-                    <div class="stat-icon bg-success bg-opacity-20 text-success mx-auto" id="iconStatus"><i class="fas fa-shield-alt"></i></div>
-                    <span class="text-secondary small fw-bold">STATUS</span>
-                    <div class="val-big" id="txtStatus" style="color:#10b981">SAFE</div>
-                    <div class="mt-2 small opacity-50 text-secondary" id="lastUpdate">No Signal</div>
+                    <div class="stat-icon icon-status mx-auto" id="iconStatus"><i class="fas fa-user-shield"></i></div>
+                    <span class="text-secondary small fw-bold">ENVIRONMENT STATUS</span>
+                    <div class="val-big" id="txtStatus" style="color:#10b981">SECURE</div>
+                    <div class="mt-2 small opacity-50 text-secondary" id="lastUpdate">No Connection</div>
                 </div>
             </div>
         </div>
@@ -148,17 +164,17 @@
         <div class="row g-4 mb-4">
             <div class="col-lg-8">
                 <div class="card-custom p-4">
-                    <h6 class="fw-bold mb-4"><i class="fas fa-chart-line me-2 text-primary"></i>Analytics Stream</h6>
+                    <h6 class="fw-bold mb-4"><i class="fas fa-wave-square me-2 text-primary"></i>Real-time Data Stream</h6>
                     <div style="height: 350px;"><canvas id="iotChart"></canvas></div>
                 </div>
             </div>
             <div class="col-lg-4">
                 <div class="card-custom p-4">
-                    <h6 class="fw-bold mb-3"><i class="fas fa-history me-2 text-info"></i>History Lokal</h6>
+                    <h6 class="fw-bold mb-3"><i class="fas fa-file-invoice me-2 text-info"></i>System Event Log</h6>
                     <div class="table-responsive" style="max-height: 330px;">
                         <table class="table table-dark table-hover small align-middle">
-                            <thead class="text-secondary">
-                                <tr><th>Jam</th><th>Temp</th><th>Gas</th></tr>
+                            <thead class="text-secondary border-bottom border-secondary">
+                                <tr><th>TIMESTAMP</th><th>TEMP</th><th>GAS</th></tr>
                             </thead>
                             <tbody id="tableBody"></tbody>
                         </table>
@@ -170,7 +186,7 @@
         <div class="row mb-5">
             <div class="col-12">
                 <div class="card-custom p-4">
-                    <h6 class="fw-bold mb-3"><i class="fas fa-database me-2 text-success"></i>Cloud Storage Instance</h6>
+                    <h6 class="fw-bold mb-3"><i class="fas fa-server me-2 text-success"></i>Cloud Storage Link</h6>
                     <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vS71wF9Gu0F__jdETIntozU_eVbgvtR4SmP9Nr-IuxKtWQERKs9UX4vcNyFDKIW-d3mTJb4poqiU4Ip/pubhtml?widget=true&amp;headers=false"></iframe>
                 </div>
             </div>
@@ -222,7 +238,7 @@
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { labels: { color: '#94a3b8' } } },
+                plugins: { legend: { labels: { color: '#94a3b8', font: { weight: 'bold' } } } },
                 scales: { x: { ticks: { color: '#94a3b8' }, grid: { display: false } }, y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } } }
             }
         });
@@ -235,9 +251,8 @@
             document.getElementById("txtSuhu").innerText = data.Suhu.toFixed(1);
             document.getElementById("txtLembap").innerText = data.Kelembapan.toFixed(1);
             document.getElementById("txtGas").innerText = data.KadarGas;
-            document.getElementById("lastUpdate").innerText = "Last Sync: " + time;
+            document.getElementById("lastUpdate").innerText = "SIGNAL SYNC: " + time;
 
-            // Update Progress Bars
             document.getElementById("barSuhu").style.width = (data.Suhu / 60 * 100) + "%";
             document.getElementById("barLembap").style.width = data.Kelembapan + "%";
             document.getElementById("barGas").style.width = (data.KadarGas / 1000 * 100) + "%";
@@ -254,15 +269,15 @@
                 txtStatus.innerText = "CRITICAL";
                 txtStatus.style.color = "#ef4444";
                 cardStatus.classList.add("bg-danger-glow");
-                iconStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+                iconStatus.innerHTML = '<i class="fas fa-biohazard"></i>';
                 iconStatus.className = "stat-icon bg-danger text-white mx-auto shadow-lg";
-                if(lastStatus !== "BAHAYA") { speak("Peringatan, terdeteksi kebocoran gas."); lastStatus = "BAHAYA"; }
+                if(lastStatus !== "BAHAYA") { speak("Warning. Critical gas levels detected."); lastStatus = "BAHAYA"; }
             } else {
-                txtStatus.innerText = "SAFE";
+                txtStatus.innerText = "SECURE";
                 txtStatus.style.color = "#10b981";
                 cardStatus.classList.remove("bg-danger-glow");
-                iconStatus.innerHTML = '<i class="fas fa-shield-alt"></i>';
-                iconStatus.className = "stat-icon bg-success bg-opacity-20 text-success mx-auto";
+                iconStatus.innerHTML = '<i class="fas fa-user-shield"></i>';
+                iconStatus.className = "stat-icon icon-status mx-auto";
                 lastStatus = "AMAN";
             }
 
@@ -277,7 +292,7 @@
             iotChart.update('none');
 
             const body = document.getElementById("tableBody");
-            const row = `<tr><td class="text-secondary">${time}</td><td>${data.Suhu.toFixed(1)}°</td><td class="text-warning">${data.KadarGas}</td></tr>`;
+            const row = `<tr><td class="text-secondary fw-bold">${time}</td><td>${data.Suhu.toFixed(1)}°</td><td class="text-warning fw-bold">${data.KadarGas}</td></tr>`;
             body.insertAdjacentHTML('afterbegin', row);
             if(body.rows.length > 10) body.deleteRow(10);
         });
@@ -287,15 +302,15 @@
             document.getElementById("liveDot").style.display = "inline-block";
             const logStatus = document.getElementById("logStatus");
             logStatus.className = "badge-status bg-primary bg-opacity-20 text-primary border border-primary";
-            logStatus.innerHTML = '<i class="fas fa-satellite-dish fa-spin me-2"></i>LINK ACTIVE';
-            speak("Sistem online.");
+            logStatus.innerHTML = '<i class="fas fa-wifi me-2"></i>LINK ACTIVE';
+            speak("System online.");
         };
         document.getElementById("btnStop").onclick = () => {
             isRunning = false;
             document.getElementById("liveDot").style.display = "none";
             const logStatus = document.getElementById("logStatus");
             logStatus.className = "badge-status bg-dark border border-secondary text-secondary";
-            logStatus.innerHTML = '<i class="fas fa-power-off me-2"></i>SHUTDOWN';
+            logStatus.innerHTML = '<i class="fas fa-power-off me-2"></i>OFFLINE';
         };
         document.getElementById("btnReset").onclick = () => {
             document.getElementById("tableBody").innerHTML = "";

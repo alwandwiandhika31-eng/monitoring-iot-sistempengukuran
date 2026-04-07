@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IoT Analytics - Ultra Edition</title>
+    <title>IoT Analytics - Ultra Full Version</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
@@ -19,17 +19,17 @@
         
         .header-glass { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(15px); border-bottom: 1px solid #1e293b; position: sticky; top: 0; z-index: 1000; }
         
-        /* Efek Glow pada Card */
         .card-custom { 
             background: var(--card-bg); 
             border: 1px solid #1e293b; 
             border-radius: 1.5rem; 
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
             transition: all 0.4s ease;
+            height: 100%;
         }
-        .card-custom:hover { transform: translateY(-5px); border-color: var(--accent); box-shadow: 0 0 15px rgba(59, 130, 246, 0.2); }
+        .card-custom:hover { transform: translateY(-5px); border-color: var(--accent); }
 
-        /* Animasi Khusus Bahaya */
+        /* Efek Berdenyut saat Bahaya */
         @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
         .bg-danger-glow { animation: pulse-red 1.5s infinite; border-color: #ef4444 !important; }
 
@@ -37,7 +37,7 @@
         .val-big { font-size: 2.25rem; font-weight: 800; letter-spacing: -1px; }
         .unit { font-size: 1rem; color: #94a3b8; margin-left: 4px; }
         
-        .btn-action { border-radius: 12px; font-weight: 700; padding: 12px 24px; transition: 0.3s; }
+        .btn-action { border-radius: 12px; font-weight: 700; padding: 12px 20px; transition: 0.3s; }
         .btn-start { background: #10b981; color: white; border: none; }
         .btn-stop { background: #ef4444; color: white; border: none; }
         
@@ -46,7 +46,8 @@
         .status-danger { color: #ef4444 !important; text-shadow: 0 0 8px rgba(239, 68, 68, 0.5); }
         .status-safe { color: #10b981 !important; text-shadow: 0 0 8px rgba(16, 185, 129, 0.5); }
 
-        iframe { border-radius: 1.5rem; border: 1px solid #1e293b; height: 450px; width: 100%; }
+        iframe { border-radius: 1.5rem; border: 1px solid #1e293b; height: 450px; width: 100%; background: #fff; }
+        .table-dark { --bs-table-bg: transparent; border-color: #2d3748; }
     </style>
 </head>
 <body>
@@ -55,9 +56,9 @@
         <div class="container d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center">
                 <i class="fas fa-bolt text-warning me-2 fs-4"></i>
-                <h5 class="mb-0 fw-bold">SMART MONITORING IOT</h5>
+                <h5 class="mb-0 fw-bold">PROYEK MONITORING IOT</h5>
             </div>
-            <span id="logStatus" class="badge-status bg-secondary"><i class="fas fa-pause-circle me-1"></i> System Idle</span>
+            <span id="logStatus" class="badge-status bg-secondary"><i class="fas fa-pause-circle me-1"></i> Idle</span>
         </div>
     </nav>
 
@@ -65,11 +66,12 @@
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card-custom p-3 d-flex flex-wrap align-items-center gap-3">
-                    <button id="btnStart" class="btn-action btn-start"><i class="fas fa-play me-2"></i>AKTIFKAN SISTEM</button>
-                    <button id="btnStop" class="btn-action btn-stop"><i class="fas fa-stop me-2"></i>NONAKTIFKAN</button>
+                    <button id="btnStart" class="btn-action btn-start"><i class="fas fa-play me-2"></i>START LOGGING</button>
+                    <button id="btnStop" class="btn-action btn-stop"><i class="fas fa-stop me-2"></i>STOP</button>
+                    <button id="btnReset" class="btn btn-outline-light border-secondary btn-action">RESET TABLE</button>
                     
                     <div class="ms-md-auto d-flex align-items-center gap-2">
-                        <span class="small text-secondary fw-bold">JEDA UPDATE (DETIK):</span>
+                        <span class="small text-secondary fw-bold">JEDA (DETIK):</span>
                         <input type="number" id="intervalInput" class="form-control bg-dark text-white border-secondary shadow-none" value="2" style="width: 80px; border-radius: 10px;">
                     </div>
                 </div>
@@ -101,28 +103,26 @@
             <div class="col-md-3">
                 <div class="card-custom p-4" id="cardStatus">
                     <div class="stat-icon bg-success bg-opacity-10 text-success" id="iconStatus"><i class="fas fa-shield-alt"></i></div>
-                    <p class="text-secondary small fw-bold mb-1">KEAMANAN</p>
+                    <p class="text-secondary small fw-bold mb-1">STATUS</p>
                     <div class="val-big status-safe" id="txtStatus">AMAN</div>
                 </div>
             </div>
         </div>
 
-        <div class="row g-4 mb-5">
-            <div class="col-lg-12">
+        <div class="row g-4 mb-4">
+            <div class="col-lg-8">
                 <div class="card-custom p-4">
-                    <h6 class="fw-bold mb-4"><i class="fas fa-chart-line me-2 text-primary"></i>Grafik Analisis Real-time</h6>
-                    <div style="height: 350px;">
-                        <canvas id="iotChart"></canvas>
-                    </div>
+                    <h6 class="fw-bold mb-4"><i class="fas fa-chart-line me-2 text-primary"></i>Grafik Real-time</h6>
+                    <div style="height: 350px;"><canvas id="iotChart"></canvas></div>
                 </div>
             </div>
-            <div class="col-12">
+            <div class="col-lg-4">
                 <div class="card-custom p-4">
-                    <h6 class="fw-bold mb-3"><i class="fas fa-table me-2 text-info"></i>Log Data Terakhir</h6>
-                    <div class="table-responsive">
-                        <table class="table table-dark table-hover small mb-0" style="border-color: #2d3748;">
+                    <h6 class="fw-bold mb-3"><i class="fas fa-history me-2 text-info"></i>History Lokal</h6>
+                    <div class="table-responsive" style="max-height: 330px;">
+                        <table class="table table-dark table-hover small">
                             <thead>
-                                <tr><th>Waktu</th><th>Temperatur</th><th>Kelembapan</th><th>Kadar Gas</th><th>Keterangan</th></tr>
+                                <tr><th>Jam</th><th>Temp</th><th>Hum</th><th>Gas</th></tr>
                             </thead>
                             <tbody id="tableBody"></tbody>
                         </table>
@@ -130,44 +130,55 @@
                 </div>
             </div>
         </div>
+
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card-custom p-4">
+                    <h6 class="fw-bold mb-3"><i class="fas fa-database me-2 text-success"></i>Cloud Storage (Google Sheets)</h6>
+                    <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vS71wF9Gu0F__jdETIntozU_eVbgvtR4SmP9Nr-IuxKtWQERKs9UX4vcNyFDKIW-d3mTJb4poqiU4Ip/pubhtml?widget=true&amp;headers=false"></iframe>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
+        // --- CONFIG FIREBASE ---
         const firebaseConfig = { databaseURL: "https://monitoring-iot-9ed03-default-rtdb.asia-southeast1.firebasedatabase.app/" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
         let isRunning = false;
-        let lastStatus = "AMAN"; // Untuk mencegah suara berulang-ulang
+        let lastStatus = "AMAN";
 
         // --- FUNGSI SUARA ---
         function speak(text) {
             if ('speechSynthesis' in window) {
                 const msg = new SpeechSynthesisUtterance();
                 msg.text = text;
-                msg.lang = 'id-ID'; // Bahasa Indonesia
+                msg.lang = 'id-ID';
                 window.speechSynthesis.speak(msg);
             }
         }
 
-        // --- INISIALISASI CHART ---
+        // --- CHART SETUP ---
         const ctx = document.getElementById('iotChart').getContext('2d');
         const iotChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: [],
                 datasets: [
-                    { label: 'Suhu (°C)', data: [], borderColor: '#ef4444', tension: 0.4, fill: true, backgroundColor: 'rgba(239, 68, 68, 0.05)' },
-                    { label: 'Gas (ppm)', data: [], borderColor: '#f59e0b', tension: 0.4, fill: true, backgroundColor: 'rgba(245, 158, 11, 0.05)' }
+                    { label: 'Suhu (°C)', data: [], borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', fill: true, tension: 0.4 },
+                    { label: 'Lembap (%)', data: [], borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.4 },
+                    { label: 'Gas (ppm)', data: [], borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, tension: 0.4 }
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { labels: { color: '#94a3b8', font: { weight: 'bold' } } } },
+                plugins: { legend: { labels: { color: '#94a3b8' } } },
                 scales: {
-                    x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
-                    y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } }
+                    x: { ticks: { color: '#94a3b8' }, grid: { display: false } },
+                    y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } }
                 }
             }
         });
@@ -179,6 +190,7 @@
             const data = snap.val();
             const time = new Date().toLocaleTimeString();
 
+            // Update Teks
             document.getElementById("txtSuhu").innerText = data.Suhu.toFixed(1);
             document.getElementById("txtLembap").innerText = data.Kelembapan.toFixed(1);
             document.getElementById("txtGas").innerText = data.KadarGas;
@@ -187,7 +199,7 @@
             const iconStatus = document.getElementById("iconStatus");
             const cardStatus = document.getElementById("cardStatus");
 
-            // LOGIKA STATUS & NOTIFIKASI SUARA
+            // LOGIKA STATUS & SUARA
             if(data.Status === "BAHAYA") {
                 txtStatus.innerText = "BAHAYA!";
                 txtStatus.className = "val-big status-danger";
@@ -205,56 +217,59 @@
                 cardStatus.classList.remove("bg-danger-glow");
                 iconStatus.innerHTML = '<i class="fas fa-shield-alt"></i>';
                 iconStatus.className = "stat-icon bg-success bg-opacity-10 text-success";
-                
-                if(lastStatus === "BAHAYA") {
-                    speak("Kondisi kembali normal.");
-                }
                 lastStatus = "AMAN";
             }
 
-            // Update Grafik
+            // Update Grafik (Limit 15 data)
             if(iotChart.data.labels.length > 15) {
                 iotChart.data.labels.shift();
                 iotChart.data.datasets.forEach(d => d.data.shift());
             }
             iotChart.data.labels.push(time);
             iotChart.data.datasets[0].data.push(data.Suhu);
-            iotChart.data.datasets[1].data.push(data.KadarGas);
+            iotChart.data.datasets[1].data.push(data.Kelembapan);
+            iotChart.data.datasets[2].data.push(data.KadarGas);
             iotChart.update('none');
 
             // Update Tabel
             const body = document.getElementById("tableBody");
-            const row = `<tr>
-                <td>${time}</td>
-                <td>${data.Suhu.toFixed(1)}°C</td>
-                <td>${data.Kelembapan.toFixed(1)}%</td>
-                <td>${data.KadarGas} ppm</td>
-                <td><span class="badge ${data.Status === 'BAHAYA' ? 'bg-danger' : 'bg-success'}">${data.Status}</span></td>
-            </tr>`;
+            const row = `<tr><td>${time}</td><td>${data.Suhu.toFixed(1)}°</td><td>${data.Kelembapan.toFixed(1)}%</td><td>${data.KadarGas}</td></tr>`;
             body.insertAdjacentHTML('afterbegin', row);
-            if(body.rows.length > 8) body.deleteRow(8);
+            if(body.rows.length > 10) body.deleteRow(10);
         });
 
         // --- TOMBOL AKSI ---
         document.getElementById("btnStart").onclick = () => {
             isRunning = true;
             document.getElementById("logStatus").className = "badge-status bg-success text-white";
-            document.getElementById("logStatus").innerHTML = '<i class="fas fa-sync-alt fa-spin me-1"></i> Monitoring Aktif';
+            document.getElementById("logStatus").innerHTML = '<i class="fas fa-sync-alt fa-spin me-1"></i> Live Logging';
             speak("Sistem monitoring diaktifkan.");
-        }
+        };
         document.getElementById("btnStop").onclick = () => {
             isRunning = false;
             document.getElementById("logStatus").className = "badge-status bg-danger text-white";
-            document.getElementById("logStatus").innerHTML = '<i class="fas fa-stop-circle me-1"></i> Monitoring Mati';
-            speak("Sistem dihentikan.");
-        }
+            document.getElementById("logStatus").innerHTML = '<i class="fas fa-stop-circle me-1"></i> Stopped';
+        };
+        document.getElementById("btnReset").onclick = () => {
+            document.getElementById("tableBody").innerHTML = "";
+            iotChart.data.labels = [];
+            iotChart.data.datasets.forEach(d => d.data = []);
+            iotChart.update();
+        };
 
-        // --- UPDATE JEDA ---
+        // --- UPDATE JEDA KE FIREBASE ---
         const intervalInput = document.getElementById("intervalInput");
         intervalInput.onchange = () => {
             const val = parseInt(intervalInput.value);
-            if (val >= 1) db.ref("Settings").update({ JedaUpdate: val });
+            if (val >= 1) {
+                db.ref("Settings").update({ JedaUpdate: val });
+            }
         };
+
+        // Ambil nilai awal jeda
+        db.ref("Settings/JedaUpdate").once("value", (snapshot) => {
+            if (snapshot.exists()) { intervalInput.value = snapshot.val(); }
+        });
     </script>
 </body>
 </html>
